@@ -431,6 +431,7 @@ export default function CheckoutModal({ isOpen, onClose }: Props) {
           Desenvolvido por Gabriel Silva
         </div>
       </motion.div>
+      )}
     </AnimatePresence>
   );
 }
