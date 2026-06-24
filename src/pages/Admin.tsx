@@ -10,9 +10,9 @@ import {
   getProducts, saveProducts, getCategories, saveCategories,
   getAddons, saveAddons, getOrders, updateOrderStatus,
   fetchProducts, fetchCategories, fetchAddons, fetchOrders, API,
-  fetchLoyaltySettings, saveLoyaltySettings
+  fetchLoyaltySettings, saveLoyaltySettings, fetchStoreSettings, saveStoreSettings
 } from "@/data/menuData";
-import type { Product, Addon, Category, Order, OrderStatus, LoyaltySettings } from "@/data/menuData";
+import type { Product, Addon, Category, Order, OrderStatus, LoyaltySettings, StoreSettings } from "@/data/menuData";
 
 const availableIcons = [
   { id: "drumstick", label: "Frango" }, { id: "beef", label: "Carne" },
@@ -46,7 +46,7 @@ export default function Admin() {
   const { data: categories = [], refetch: refetchCategories } = useQuery({ queryKey: ['categories'], queryFn: fetchCategories });
   const { data: addons = [], refetch: refetchAddons } = useQuery({ queryKey: ['addons'], queryFn: fetchAddons });
   const { data: orders = [], refetch: refetchOrders } = useQuery({ queryKey: ['orders'], queryFn: fetchOrders });
-  const [activeTab, setActiveTab] = useState<"orders" | "products" | "categories" | "addons" | "promos" | "loyalty">("orders");
+  const [activeTab, setActiveTab] = useState<"orders" | "products" | "categories" | "addons" | "promos" | "loyalty" | "settings">("orders");
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
@@ -92,6 +92,30 @@ export default function Admin() {
         active: Boolean(loyaltyData.active) ? 1 : 0
       });
       alert("Configurações de fidelidade salvas com sucesso!");
+    }
+  };
+
+  // Store settings form
+  const [storeSettings, setStoreSettings] = useState<StoreSettings | null>(null);
+
+  const loadStoreSettings = async () => {
+    const data = await fetchStoreSettings();
+    setStoreSettings(data);
+  };
+
+  const handleSaveStoreSettings = async () => {
+    if (storeSettings) {
+      await saveStoreSettings({
+        ...storeSettings,
+        has_delivery: Boolean(storeSettings.has_delivery) ? 1 : 0,
+        has_table: Boolean(storeSettings.has_table) ? 1 : 0,
+        has_pickup: Boolean(storeSettings.has_pickup) ? 1 : 0,
+        accepts_pix: Boolean(storeSettings.accepts_pix) ? 1 : 0,
+        accepts_cash: Boolean(storeSettings.accepts_cash) ? 1 : 0,
+        accepts_card: Boolean(storeSettings.accepts_card) ? 1 : 0,
+        delivery_fee: Number(storeSettings.delivery_fee) || 0
+      });
+      alert("Configurações da loja salvas com sucesso!");
     }
   };
 
@@ -319,11 +343,13 @@ export default function Admin() {
           { key: "addons", label: "Adicionais", icon: ListPlus },
           { key: "promos", label: "Promoções", icon: Star },
           { key: "loyalty", label: "Fidelidade", icon: Award },
+          { key: "settings", label: "Configurações", icon: Settings },
         ].map(({ key, label, icon: Icon }) => (
           <button key={key} onClick={() => {
             setActiveTab(key as typeof activeTab);
             if (key === "orders") refreshOrders();
             if (key === "loyalty" && !loyaltyData) loadLoyaltyData();
+            if (key === "settings") loadStoreSettings();
           }}
             className={`flex-1 py-3 flex items-center justify-center gap-2 text-sm font-medium transition-colors whitespace-nowrap px-3 ${activeTab === key ? "text-primary border-b-2 border-primary" : "text-muted-foreground"
               }`}>
@@ -381,7 +407,7 @@ export default function Admin() {
                         <p className="text-sm text-foreground">{order.items.map((i) => `${i.quantity}x ${i.productName}`).join(", ")}</p>
                         <div className="flex items-center justify-between mt-1">
                           <span className="text-primary font-bold text-sm">R$ {order.total.toFixed(2)}</span>
-                          <span className="text-[10px] text-muted-foreground">📱 {order.customerWhatsApp}</span>
+                          <span className="text-[10px] text-muted-foreground">👤 {order.customerName || "Não informado"} · 📱 {order.customerWhatsApp}</span>
                         </div>
                       </button>
 
@@ -399,10 +425,15 @@ export default function Admin() {
                             </div>
                           ))}
 
-                          <div className="text-xs text-muted-foreground space-y-0.5">
-                            <p>🛒 {order.consumeType}{order.address && ` · ${order.address}`}{order.mesa && ` · Mesa ${order.mesa}`}</p>
-                            <p>💳 {order.paymentMethod}</p>
-                            <p>🪪 CPF: {order.customerCPF}</p>
+                          <div className="text-xs text-muted-foreground space-y-0.5 border-t border-border/50 pt-2">
+                            <p>👤 **Cliente:** {order.customerName || "Não informado"}</p>
+                            <p>🛒 **Tipo:** {order.consumeType}{order.address && ` · Endereço: ${order.address}`}{order.mesa && ` · Mesa: ${order.mesa}`}</p>
+                            <p>💳 **Pagamento:** {order.paymentMethod}</p>
+                            {order.customerCPF && <p>🪪 **CPF:** {order.customerCPF}</p>}
+                            {order.deliveryFee > 0 && <p>🛵 **Taxa de Entrega:** R$ {order.deliveryFee.toFixed(2)}</p>}
+                            {order.changeNeededFor !== undefined && order.changeNeededFor !== null && order.changeNeededFor > 0 && (
+                              <p>💵 **Troco para:** R$ {order.changeNeededFor.toFixed(2)} (Troco a levar: R$ {(order.changeNeededFor - order.total).toFixed(2)})</p>
+                            )}
                           </div>
 
                           {/* Actions */}
@@ -547,7 +578,7 @@ export default function Admin() {
                 <div>
                   <label className="text-sm font-medium text-foreground mb-1 block">Adicionais</label>
                   <div className="flex flex-wrap gap-2">
-                    {addons.filter((a) => a.categoryIds.includes(formCategory)).map((addon) => (
+                    {addons.map((addon) => (
                       <button key={addon.id} type="button"
                         onClick={() => setFormAddons((prev) => prev.includes(addon.id) ? prev.filter((a) => a !== addon.id) : [...prev, addon.id])}
                         className={`text-xs px-3 py-1.5 rounded-full transition-colors ${formAddons.includes(addon.id) ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
@@ -808,6 +839,132 @@ export default function Admin() {
 
             <button onClick={handleSaveLoyalty} className="w-full bg-primary text-primary-foreground font-semibold py-3 flex items-center justify-center gap-2 rounded-xl mt-4">
               Salvar Configurações
+            </button>
+          </div>
+        )}
+
+        {/* ── SETTINGS TAB ── */}
+        {activeTab === "settings" && storeSettings && (
+          <div className="bg-card rounded-xl shadow-card p-6 space-y-6">
+            <div>
+              <h2 className="text-xl font-display text-foreground mb-1">Configurações Gerais da Loja</h2>
+              <p className="text-sm text-muted-foreground">Gerencie o funcionamento básico da doceria, como taxas, horários e formas de pagamento.</p>
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="font-semibold text-foreground border-b border-border pb-2">Canais de Consumo</h3>
+              <div className="space-y-3">
+                <label className="flex items-center gap-3 p-3 border border-border rounded-xl cursor-pointer hover:bg-muted/10 transition-colors font-medium text-foreground">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(storeSettings.has_delivery)}
+                    onChange={(e) => setStoreSettings({ ...storeSettings, has_delivery: e.target.checked ? 1 : 0 })}
+                    className="w-5 h-5 accent-primary rounded"
+                  />
+                  <div>
+                    <span className="block text-sm font-semibold text-foreground">Entrega</span>
+                    <span className="text-xs text-muted-foreground font-normal">Permite pedidos para entrega em domicílio</span>
+                  </div>
+                </label>
+
+                <label className="flex items-center gap-3 p-3 border border-border rounded-xl cursor-pointer hover:bg-muted/10 transition-colors font-medium text-foreground">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(storeSettings.has_pickup)}
+                    onChange={(e) => setStoreSettings({ ...storeSettings, has_pickup: e.target.checked ? 1 : 0 })}
+                    className="w-5 h-5 accent-primary rounded"
+                  />
+                  <div>
+                    <span className="block text-sm font-semibold text-foreground">Retirada</span>
+                    <span className="text-xs text-muted-foreground font-normal">Permite que o cliente retire o pedido no local</span>
+                  </div>
+                </label>
+
+                <label className="flex items-center gap-3 p-3 border border-border rounded-xl cursor-pointer hover:bg-muted/10 transition-colors font-medium text-foreground">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(storeSettings.has_table)}
+                    onChange={(e) => setStoreSettings({ ...storeSettings, has_table: e.target.checked ? 1 : 0 })}
+                    className="w-5 h-5 accent-primary rounded"
+                  />
+                  <div>
+                    <span className="block text-sm font-semibold text-foreground">Mesa (Consumo Local)</span>
+                    <span className="text-xs text-muted-foreground font-normal">Permite pedidos para consumo no estabelecimento informando o número da mesa</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="font-semibold text-foreground border-b border-border pb-2">Formas de Pagamento Aceitas</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <label className="flex items-center gap-3 p-3 border border-border rounded-xl cursor-pointer hover:bg-muted/10 transition-colors font-semibold text-sm text-foreground">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(storeSettings.accepts_pix)}
+                    onChange={(e) => setStoreSettings({ ...storeSettings, accepts_pix: e.target.checked ? 1 : 0 })}
+                    className="w-5 h-5 accent-primary rounded"
+                  />
+                  <span>Pix</span>
+                </label>
+
+                <label className="flex items-center gap-3 p-3 border border-border rounded-xl cursor-pointer hover:bg-muted/10 transition-colors font-semibold text-sm text-foreground">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(storeSettings.accepts_cash)}
+                    onChange={(e) => setStoreSettings({ ...storeSettings, accepts_cash: e.target.checked ? 1 : 0 })}
+                    className="w-5 h-5 accent-primary rounded"
+                  />
+                  <span>Dinheiro</span>
+                </label>
+
+                <label className="flex items-center gap-3 p-3 border border-border rounded-xl cursor-pointer hover:bg-muted/10 transition-colors font-semibold text-sm text-foreground">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(storeSettings.accepts_card)}
+                    onChange={(e) => setStoreSettings({ ...storeSettings, accepts_card: e.target.checked ? 1 : 0 })}
+                    className="w-5 h-5 accent-primary rounded"
+                  />
+                  <span>Cartão (Crédito/Débito)</span>
+                </label>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="font-semibold text-foreground border-b border-border pb-2">Taxas e Horários</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-1 block">Taxa de Entrega (R$)</label>
+                  <input
+                    type="number" step="0.01"
+                    value={storeSettings.delivery_fee}
+                    onChange={(e) => setStoreSettings({ ...storeSettings, delivery_fee: parseFloat(e.target.value) || 0 })}
+                    className="w-full border border-border rounded-lg p-2.5 text-sm bg-background text-foreground"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-1 block">Horário de Abertura</label>
+                  <input
+                    type="text" placeholder="10:00"
+                    value={storeSettings.opening_time}
+                    onChange={(e) => setStoreSettings({ ...storeSettings, opening_time: e.target.value })}
+                    className="w-full border border-border rounded-lg p-2.5 text-sm bg-background text-foreground"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-1 block">Horário de Fechamento</label>
+                  <input
+                    type="text" placeholder="22:00"
+                    value={storeSettings.closing_time}
+                    onChange={(e) => setStoreSettings({ ...storeSettings, closing_time: e.target.value })}
+                    className="w-full border border-border rounded-lg p-2.5 text-sm bg-background text-foreground"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <button onClick={handleSaveStoreSettings} className="w-full bg-primary text-primary-foreground font-semibold py-3 flex items-center justify-center gap-2 rounded-xl mt-4">
+              Salvar Configurações Gerais
             </button>
           </div>
         )}

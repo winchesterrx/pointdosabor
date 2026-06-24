@@ -99,6 +99,9 @@ export interface Order {
   createdAt: string;
   usedPoints?: number;
   discountAmount?: number;
+  customerName?: string;
+  changeNeededFor?: number;
+  deliveryFee?: number;
 }
 
 // ── Categories ──
@@ -299,21 +302,42 @@ export function updateOrderStatus(orderId: string, status: OrderStatus) {
   return orders;
 }
 
-// Get orders by CPF for customer view
-export function getOrdersByCPF(cpf: string): Order[] {
-  return getOrders().filter((o) => o.customerCPF === cpf);
+// Get orders by CPF or WhatsApp/phone number lookup for customer view
+export function getOrdersByLookup(term: string): Order[] {
+  const cleanTerm = term.replace(/\D/g, "");
+  if (!cleanTerm) return [];
+  return getOrders().filter((o) => {
+    const cleanCPF = o.customerCPF ? o.customerCPF.replace(/\D/g, "") : "";
+    const cleanWA = o.customerWhatsApp ? o.customerWhatsApp.replace(/\D/g, "") : "";
+    return (cleanCPF && cleanCPF === cleanTerm) || (cleanWA && (cleanWA.endsWith(cleanTerm) || cleanTerm.endsWith(cleanWA)));
+  });
 }
 
-export async function fetchOrdersByCPF(cpf: string): Promise<Order[]> {
+export async function fetchOrdersByLookup(term: string): Promise<Order[]> {
   try {
     const res = await fetch(`${API_URL}/orders`);
     if (!res.ok) throw new Error('Falha ao buscar pedidos');
     const data = await res.json();
-    return data.filter((o: Order) => o.customerCPF === cpf);
+    const cleanTerm = term.replace(/\D/g, "");
+    if (!cleanTerm) return [];
+    return data.filter((o: Order) => {
+      const cleanCPF = o.customerCPF ? o.customerCPF.replace(/\D/g, "") : "";
+      const cleanWA = o.customerWhatsApp ? o.customerWhatsApp.replace(/\D/g, "") : "";
+      return (cleanCPF && cleanCPF === cleanTerm) || (cleanWA && (cleanWA.endsWith(cleanTerm) || cleanTerm.endsWith(cleanWA)));
+    });
   } catch (error) {
     console.error(error);
-    return getOrdersByCPF(cpf);
+    return getOrdersByLookup(term);
   }
+}
+
+// Keep these for backward compatibility
+export function getOrdersByCPF(cpf: string): Order[] {
+  return getOrdersByLookup(cpf);
+}
+
+export async function fetchOrdersByCPF(cpf: string): Promise<Order[]> {
+  return fetchOrdersByLookup(cpf);
 }
 
 // ── Loyalty ──
@@ -351,4 +375,42 @@ export async function fetchCustomerPoints(cpf: string): Promise<number> {
     console.error(e);
     return 0;
   }
+}
+
+// ── Store Settings ──
+export interface StoreSettings {
+  has_delivery: boolean | number;
+  has_table: boolean | number;
+  has_pickup: boolean | number;
+  accepts_pix: boolean | number;
+  accepts_cash: boolean | number;
+  accepts_card: boolean | number;
+  opening_time: string;
+  closing_time: string;
+  delivery_fee: number;
+}
+
+export async function fetchStoreSettings(): Promise<StoreSettings> {
+  try {
+    const res = await fetch(`${API_URL}/store/settings`);
+    if (!res.ok) throw new Error('Falha ao buscar configurações da loja');
+    return await res.json();
+  } catch (e) {
+    console.error(e);
+    return {
+      has_delivery: 1,
+      has_table: 1,
+      has_pickup: 1,
+      accepts_pix: 1,
+      accepts_cash: 1,
+      accepts_card: 1,
+      opening_time: "10:00",
+      closing_time: "22:00",
+      delivery_fee: 0.00
+    };
+  }
+}
+
+export async function saveStoreSettings(settings: StoreSettings) {
+  return API.put('/store/settings', settings);
 }

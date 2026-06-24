@@ -353,6 +353,53 @@ app.get('/api/loyalty/customer/:cpf', async (req, res) => {
   }
 });
 
+// ── Store Settings ──
+app.get('/api/store/settings', async (req, res) => {
+  try {
+    const [rows] = await db.query('SELECT * FROM store_settings WHERE id = 1');
+    res.json(rows[0] || {
+      has_delivery: 1,
+      has_table: 1,
+      has_pickup: 1,
+      accepts_pix: 1,
+      accepts_cash: 1,
+      accepts_card: 1,
+      opening_time: "10:00",
+      closing_time: "22:00",
+      delivery_fee: 0.00
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Erro ao buscar configurações da loja' });
+  }
+});
+
+app.put('/api/store/settings', async (req, res) => {
+  const { 
+    has_delivery, has_table, has_pickup, 
+    accepts_pix, accepts_cash, accepts_card, 
+    opening_time, closing_time, delivery_fee 
+  } = req.body;
+  try {
+    await db.query(
+      `UPDATE store_settings SET 
+        has_delivery = ?, has_table = ?, has_pickup = ?, 
+        accepts_pix = ?, accepts_cash = ?, accepts_card = ?, 
+        opening_time = ?, closing_time = ?, delivery_fee = ? 
+       WHERE id = 1`,
+      [
+        has_delivery ? 1 : 0, has_table ? 1 : 0, has_pickup ? 1 : 0,
+        accepts_pix ? 1 : 0, accepts_cash ? 1 : 0, accepts_card ? 1 : 0,
+        opening_time, closing_time, delivery_fee
+      ]
+    );
+    res.json({ message: 'Configurações atualizadas com sucesso' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Erro ao atualizar configurações' });
+  }
+});
+
 // ── Orders ──
 app.get('/api/orders', async (req, res) => {
   try {
@@ -412,7 +459,10 @@ app.get('/api/orders', async (req, res) => {
         status: o.status,
         createdAt: o.created_at,
         items: oItems,
-        timeline: oTimeline
+        timeline: oTimeline,
+        customerName: o.customer_name || '',
+        changeNeededFor: o.change_needed_for ? Number(o.change_needed_for) : undefined,
+        deliveryFee: o.delivery_fee ? Number(o.delivery_fee) : 0
       };
     });
 
@@ -432,14 +482,14 @@ app.post('/api/orders', async (req, res) => {
     const { 
       id, number, consumeType, paymentMethod, address, mesa, 
       customerWhatsApp, customerCPF, status, total, items, timeline,
-      usedPoints, discountAmount
+      usedPoints, discountAmount, customerName, changeNeededFor, deliveryFee
     } = req.body;
     const queryOrder = `
-      INSERT INTO orders (id, total, consume_type, payment_method, address, mesa, customer_whatsapp, customer_cpf, status) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO orders (id, total, consume_type, payment_method, address, mesa, customer_whatsapp, customer_cpf, status, customer_name, change_needed_for, delivery_fee) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
     await connection.query(queryOrder, [
-      id, total, consumeType, paymentMethod, address, mesa, customerWhatsApp, customerCPF, status
+      id, total, consumeType, paymentMethod, address || null, mesa || null, customerWhatsApp, customerCPF || null, status, customerName || null, changeNeededFor || null, deliveryFee || 0
     ]);
 
     // Busca o order_number gerado pelo AUTO_INCREMENT
@@ -531,6 +581,34 @@ app.put('/api/orders/:id/status', async (req, res) => {
     res.status(500).json({ error: 'Erro ao atualizar status' });
   }
 });
+
+// Auto-inicialização da tabela de store_settings
+const initDbSettings = async () => {
+  try {
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS \`store_settings\` (
+        \`id\` INT PRIMARY KEY DEFAULT 1,
+        \`has_delivery\` TINYINT DEFAULT 1,
+        \`has_table\` TINYINT DEFAULT 1,
+        \`has_pickup\` TINYINT DEFAULT 1,
+        \`accepts_pix\` TINYINT DEFAULT 1,
+        \`accepts_cash\` TINYINT DEFAULT 1,
+        \`accepts_card\` TINYINT DEFAULT 1,
+        \`opening_time\` VARCHAR(5) DEFAULT "10:00",
+        \`closing_time\` VARCHAR(5) DEFAULT "22:00",
+        \`delivery_fee\` DECIMAL(10,2) DEFAULT 0.00
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+    await db.query(`
+      INSERT IGNORE INTO \`store_settings\` (id, has_delivery, has_table, has_pickup, accepts_pix, accepts_cash, accepts_card, opening_time, closing_time, delivery_fee)
+      VALUES (1, 1, 1, 1, 1, 1, 1, '10:00', '22:00', 0.00);
+    `);
+    console.log("Banco de dados e tabela store_settings inicializados.");
+  } catch (err) {
+    console.error("Falha ao auto-inicializar tabela store_settings:", err);
+  }
+};
+initDbSettings();
 
 app.listen(PORT, () => {
   console.log(`Backend rodando na porta ${PORT}`);

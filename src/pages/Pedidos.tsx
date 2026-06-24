@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ClipboardList, Clock, CheckCircle2, ChevronLeft, Package, Truck, XCircle, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import BottomNav from "@/components/menu/BottomNav";
-import { getOrdersByCPF, fetchOrdersByCPF } from "@/data/menuData";
+import { getOrdersByLookup, fetchOrdersByLookup } from "@/data/menuData";
 import type { Order, OrderStatus } from "@/data/menuData";
 
 const statusConfig: Record<OrderStatus, { label: string; icon: React.ElementType; color: string }> = {
@@ -19,26 +19,35 @@ const timelineOrder: OrderStatus[] = ["recebido", "confirmado", "preparando", "p
 
 export default function Pedidos() {
   const navigate = useNavigate();
-  const [cpf, setCPF] = useState(() => localStorage.getItem("digitalmenu_customer_cpf") || "");
+  const [searchTerm, setSearchTerm] = useState(() => localStorage.getItem("digitalmenu_customer_cpf") || "");
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   
-  const formatCPF = (value: string) => {
-    const digits = value.replace(/\D/g, "").slice(0, 11);
-    return digits.replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+  const formatInput = (value: string) => {
+    const digits = value.replace(/\D/g, "").slice(0, 13);
+    if (digits.length === 11 && digits[2] === "9") {
+      return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+    }
+    if (digits.length === 10) {
+      return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+    }
+    if (digits.length === 11) {
+      return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+    }
+    return digits;
   };
 
-  const cleanCPF = cpf.replace(/\D/g, "");
+  const cleanTerm = searchTerm.replace(/\D/g, "");
 
   const { data: orders = [] } = useQuery({
-    queryKey: ['orders', cleanCPF],
-    queryFn: () => fetchOrdersByCPF(cleanCPF),
-    enabled: cleanCPF.length === 11,
+    queryKey: ['orders', cleanTerm],
+    queryFn: () => fetchOrdersByLookup(cleanTerm),
+    enabled: cleanTerm.length >= 10 && cleanTerm.length <= 13,
     refetchInterval: 5000
   });
 
   const loadOrders = () => {
-    if (cleanCPF.length === 11) {
-      localStorage.setItem("digitalmenu_customer_cpf", cleanCPF);
+    if (cleanTerm.length >= 10 && cleanTerm.length <= 13) {
+      localStorage.setItem("digitalmenu_customer_cpf", cleanTerm);
     }
   };
 
@@ -62,13 +71,13 @@ export default function Pedidos() {
         <p className="text-primary-foreground/70 text-sm ml-9">Acompanhe seus pedidos</p>
       </div>
 
-      {/* CPF Input */}
+      {/* Search Input */}
       <div className="px-4 mt-4">
         <div className="flex gap-2">
           <input
-            value={formatCPF(cpf)}
-            onChange={(e) => setCPF(e.target.value.replace(/\D/g, ""))}
-            placeholder="Digite seu CPF"
+            value={formatInput(searchTerm)}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="CPF ou Celular/WhatsApp"
             className="flex-1 border border-border rounded-xl p-3 text-sm bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
           />
           <button onClick={loadOrders} className="bg-primary text-primary-foreground px-4 rounded-xl">
@@ -184,7 +193,7 @@ export default function Pedidos() {
           <div className="text-center py-16">
             <ClipboardList size={48} className="mx-auto text-muted-foreground/30 mb-3" />
             <p className="text-muted-foreground">
-              {cpf.replace(/\D/g, "").length === 11 ? "Nenhum pedido encontrado" : "Informe seu CPF para ver seus pedidos"}
+              {cleanTerm.length >= 10 ? "Nenhum pedido encontrado" : "Informe seu CPF ou Celular para ver seus pedidos"}
             </p>
           </div>
         )}
