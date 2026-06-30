@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS `products` (
   `promo_expiry` DATETIME DEFAULT NULL,
   `promo_stock` INT DEFAULT NULL,
   `order_count` INT DEFAULT 0,
+  `is_made_to_order` BOOLEAN DEFAULT FALSE,
   FOREIGN KEY (`category_id`) REFERENCES `categories`(`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

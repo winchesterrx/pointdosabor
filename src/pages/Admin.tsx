@@ -76,6 +76,7 @@ export default function Admin() {
   const [formPromoExpiry, setFormPromoExpiry] = useState("");
   const [formPromoStock, setFormPromoStock] = useState("");
   const [formAddons, setFormAddons] = useState<string[]>([]);
+  const [formIsMadeToOrder, setFormIsMadeToOrder] = useState(false);
 
   // Loyalty form
   const [loyaltyData, setLoyaltyData] = useState<LoyaltySettings | null>(null);
@@ -139,6 +140,7 @@ export default function Admin() {
     setFormName(""); setFormDesc(""); setFormPrice("");
     setFormCategory(categories[0]?.id || "frango");
     setFormImages([]); setFormIsPromo(false); setFormOriginalPrice(""); setFormPromoExpiry(""); setFormPromoStock(""); setFormAddons([]);
+    setFormIsMadeToOrder(false);
     setEditingProduct(null); setShowForm(false);
   };
 
@@ -152,6 +154,7 @@ export default function Admin() {
     setFormPromoExpiry(product.promoExpiry ? new Date(product.promoExpiry).toISOString().slice(0, 16) : "");
     setFormPromoStock(product.promoStock !== undefined && product.promoStock !== null ? product.promoStock.toString() : "");
     setFormAddons(product.addons.map((a) => a.id));
+    setFormIsMadeToOrder(product.isMadeToOrder || false);
     setShowForm(true);
   };
 
@@ -168,6 +171,7 @@ export default function Admin() {
       promoExpiry: formPromoExpiry ? new Date(formPromoExpiry).toISOString() : undefined,
       promoStock: formPromoStock !== "" ? parseInt(formPromoStock) : undefined,
       orderCount: editingProduct?.orderCount || 0,
+      isMadeToOrder: formIsMadeToOrder,
     };
     try {
       if (editingProduct) {
@@ -586,10 +590,16 @@ export default function Admin() {
                     ))}
                   </div>
                 </div>
-                <label className="flex items-center gap-2 text-sm text-foreground">
-                  <input type="checkbox" checked={formIsPromo} onChange={(e) => setFormIsPromo(e.target.checked)} className="accent-primary" />
-                  Ativar como promoção
-                </label>
+                <div className="flex flex-col gap-2">
+                  <label className="flex items-center gap-2 text-sm text-foreground">
+                    <input type="checkbox" checked={formIsPromo} onChange={(e) => setFormIsPromo(e.target.checked)} className="accent-primary" />
+                    Ativar como promoção
+                  </label>
+                  <label className="flex items-center gap-2 text-sm text-foreground">
+                    <input type="checkbox" checked={formIsMadeToOrder} onChange={(e) => setFormIsMadeToOrder(e.target.checked)} className="accent-primary" />
+                    Esgotado / Apenas Sob Encomenda (Redireciona para o WhatsApp)
+                  </label>
+                </div>
                 {formIsPromo && (
                   <div className="bg-muted/30 p-3 rounded-lg border border-border space-y-3 mt-2">
                     <label className="block text-sm font-medium text-foreground">Configurações da Promoção (Opcionais)</label>
@@ -957,6 +967,15 @@ export default function Admin() {
                     type="text" placeholder="22:00"
                     value={storeSettings.closing_time}
                     onChange={(e) => setStoreSettings({ ...storeSettings, closing_time: e.target.value })}
+                    className="w-full border border-border rounded-lg p-2.5 text-sm bg-background text-foreground"
+                  />
+                </div>
+                <div className="col-span-1 sm:col-span-3">
+                  <label className="text-sm font-medium text-foreground mb-1 block">Aviso de Entrega</label>
+                  <input
+                    type="text" placeholder="Ex: Entregas apenas após as 14:00 (Deixe em branco para não exibir)"
+                    value={storeSettings.delivery_info_text || ""}
+                    onChange={(e) => setStoreSettings({ ...storeSettings, delivery_info_text: e.target.value })}
                     className="w-full border border-border rounded-lg p-2.5 text-sm bg-background text-foreground"
                   />
                 </div>

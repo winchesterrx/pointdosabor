@@ -55,6 +55,7 @@ export interface Product {
   promoExpiry?: string;
   promoStock?: number;
   orderCount: number;
+  isMadeToOrder?: boolean;
 }
 
 export interface CartItem {
@@ -194,7 +195,7 @@ export const defaultProducts: Product[] = [
   { id: "7", name: "Croissant de Nutella e Morango", description: "Croissant folhado super crocante recheado com creme de avelã e fatias de morango", price: 16.5, image: croissantDoce, category: "bolos", addons: defaultAddons.slice(0, 3), isPromo: false, orderCount: 145 },
   { id: "8", name: "Capuccino Cream", description: "Espresso curto servido com leite vaporizado cremoso, chantilly e raspas de chocolate belga", price: 12.0, image: capuccinoCream, category: "bebidas", addons: [defaultAddons[4]], isPromo: false, orderCount: 320 },
   { id: "9", name: "Pink Lemonade", description: "Bebida refrescante com limão siciliano, água com gás e xarope de frutas vermelhas caseiro", price: 10.0, image: pinkLemonade, category: "bebidas", addons: [], isPromo: false, orderCount: 245 },
-  { id: "10", name: "Espresso Italiano", description: "Café espresso tradicional tirado na hora com grãos selecionados", price: 6.0, image: espressoItaliano, category: "bebidas", addons: [], isPromo: false, orderCount: 189 },
+  { id: "10", name: "Espresso Italiano", description: "Café espresso tradicional tirado na hora com grãos selecionados", price: 6.0, image: espressoItaliano, category: "bebidas", addons: [], isPromo: false, orderCount: 189, isMadeToOrder: true },
 ];
 
 const STORAGE_KEY = "digitalmenu_products_v3";
@@ -388,6 +389,7 @@ export interface StoreSettings {
   opening_time: string;
   closing_time: string;
   delivery_fee: number;
+  delivery_info_text?: string;
 }
 
 export async function fetchStoreSettings(): Promise<StoreSettings> {
@@ -406,7 +408,8 @@ export async function fetchStoreSettings(): Promise<StoreSettings> {
       accepts_card: 1,
       opening_time: "10:00",
       closing_time: "22:00",
-      delivery_fee: 0.00
+      delivery_fee: 0.00,
+      delivery_info_text: "Entregas apenas depois das 14:00"
     };
   }
 }

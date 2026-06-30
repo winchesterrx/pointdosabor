@@ -310,7 +310,7 @@ export default function CheckoutModal({ isOpen, onClose }: Props) {
     }
 
     const encoded = encodeURIComponent(message);
-    window.open(`https://wa.me/5517997799982?text=${encoded}`, "_blank");
+    window.open(`https://wa.me/5519999500807?text=${encoded}`, "_blank");
 
     clearCart();
     setStep("cart");

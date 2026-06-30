@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, Minus, Plus, ChevronLeft, ChevronRight, Package } from "lucide-react";
+import { X, Minus, Plus, ChevronLeft, ChevronRight, Package, MessageCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Product, SelectedAddon } from "@/data/menuData";
 import { getAddonsForCategory } from "@/data/menuData";
@@ -111,7 +111,7 @@ export default function ProductModal({ product, onClose }: Props) {
               <button onClick={onClose} className="absolute top-3 right-3 bg-card/90 backdrop-blur-sm rounded-full p-2 shadow-card">
                 <X size={18} />
               </button>
-              {product.isPromo && (
+              {product.isPromo && !product.isMadeToOrder && (
                 <div className="absolute top-3 left-3 flex flex-col gap-1.5 items-start">
                   <span className="bg-primary text-primary-foreground text-[10px] font-bold px-2.5 py-1 rounded-full uppercase shadow-md">
                     Promoção
@@ -121,6 +121,13 @@ export default function ProductModal({ product, onClose }: Props) {
                       <PromoTimer expiry={product.promoExpiry} />
                     </div>
                   )}
+                </div>
+              )}
+              {product.isMadeToOrder && (
+                <div className="absolute top-3 left-3 flex flex-col gap-1.5 items-start">
+                  <span className="bg-amber-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase shadow-md">
+                    Sob Encomenda
+                  </span>
                 </div>
               )}
             </div>
@@ -146,9 +153,11 @@ export default function ProductModal({ product, onClose }: Props) {
                 </span>
               </div>
 
-              {availableAddons.length > 0 && (
-                <div className="mt-4">
-                  <h3 className="font-semibold text-foreground text-sm mb-2">Adicionais</h3>
+              {!product.isMadeToOrder ? (
+                <>
+                  {availableAddons.length > 0 && (
+                    <div className="mt-4">
+                      <h3 className="font-semibold text-foreground text-sm mb-2">Adicionais</h3>
                   <div className="space-y-1.5">
                     {availableAddons.map((addon) => {
                       const qty = addonQuantities[addon.id] || 0;
@@ -200,10 +209,18 @@ export default function ProductModal({ product, onClose }: Props) {
                   className="w-full border border-border rounded-xl p-3 text-xs bg-background text-foreground placeholder:text-muted-foreground resize-none h-16 focus:outline-none focus:ring-2 focus:ring-ring"
                 />
               </div>
+                </>
+              ) : (
+                <div className="mt-6 bg-amber-500/10 border border-amber-500/20 rounded-xl p-4">
+                  <h3 className="font-semibold text-amber-700 text-sm mb-1.5">Produto Indisponível para Pronta Entrega</h3>
+                  <p className="text-xs text-amber-700/80">Este item no momento encontra-se esgotado ou é feito apenas sob encomenda. Entre em contato conosco para verificar a disponibilidade de produção!</p>
+                </div>
+              )}
             </div>
           </div>
 
-          <div className="border-t border-border bg-card px-4 pt-3 pb-[max(1rem,calc(env(safe-area-inset-bottom)+1rem))] shrink-0 sm:rounded-b-3xl">
+          {!product.isMadeToOrder ? (
+            <div className="border-t border-border bg-card px-4 pt-3 pb-[max(1rem,calc(env(safe-area-inset-bottom)+1rem))] shrink-0 sm:rounded-b-3xl">
             <div className="flex items-center justify-center gap-3 mb-3">
               <button
                 onClick={() => setQuantity((q) => Math.max(1, q - 1))}
@@ -225,7 +242,20 @@ export default function ProductModal({ product, onClose }: Props) {
             >
               Adicionar R$ {itemTotal.toFixed(2)}
             </button>
-          </div>
+            </div>
+          ) : (
+            <div className="border-t border-border bg-card px-4 pt-3 pb-[max(1rem,calc(env(safe-area-inset-bottom)+1rem))] shrink-0 sm:rounded-b-3xl">
+               <button
+                  onClick={() => {
+                     const message = encodeURIComponent(`Olá, gostaria de saber mais informações e fazer a encomenda do produto: *${product.name}*.`);
+                     window.open(`https://wa.me/5519999500807?text=${message}`, '_blank');
+                  }}
+                  className="w-full bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold px-5 py-3 rounded-xl text-sm shadow-card active:scale-95 transition-transform flex items-center justify-center gap-2"
+                >
+                  <MessageCircle size={18} /> Encomendar via WhatsApp
+                </button>
+            </div>
+          )}
         </motion.div>
       </motion.div>
     </AnimatePresence>

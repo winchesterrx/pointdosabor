@@ -216,7 +216,8 @@ app.get('/api/products', async (req, res) => {
         originalPrice: p.original_price ? Number(p.original_price) : undefined,
         promoExpiry: p.promo_expiry,
         promoStock: p.promo_stock,
-        orderCount: p.order_count
+        orderCount: p.order_count,
+        isMadeToOrder: Boolean(p.is_made_to_order)
       };
     });
 
@@ -228,7 +229,7 @@ app.get('/api/products', async (req, res) => {
 });
 
 app.post('/api/products', async (req, res) => {
-  const { id, name, description, price, image, images, category, isPromo, originalPrice, promoExpiry, promoStock, addons } = req.body;
+  const { id, name, description, price, image, images, category, isPromo, originalPrice, promoExpiry, promoStock, addons, isMadeToOrder } = req.body;
   const connection = await db.getConnection();
   try {
     await connection.beginTransaction();
@@ -240,8 +241,8 @@ app.post('/api/products', async (req, res) => {
     const formattedPromoExpiry = promoExpiry ? new Date(promoExpiry).toISOString().slice(0, 19).replace('T', ' ') : null;
 
     await connection.query(
-      'INSERT INTO products (id, name, description, price, image, category_id, is_promo, original_price, promo_expiry, promo_stock) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [id, name, description, price, mainImage, category, isPromo, originalPrice || null, formattedPromoExpiry, promoStock !== undefined ? promoStock : null]
+      'INSERT INTO products (id, name, description, price, image, category_id, is_promo, original_price, promo_expiry, promo_stock, is_made_to_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [id, name, description, price, mainImage, category, isPromo, originalPrice || null, formattedPromoExpiry, promoStock !== undefined ? promoStock : null, isMadeToOrder || false]
     );
     
     if (savedImages && savedImages.length > 0) {
@@ -267,7 +268,7 @@ app.post('/api/products', async (req, res) => {
 });
 
 app.put('/api/products/:id', async (req, res) => {
-  const { name, description, price, image, images, category, isPromo, originalPrice, promoExpiry, promoStock, addons } = req.body;
+  const { name, description, price, image, images, category, isPromo, originalPrice, promoExpiry, promoStock, addons, isMadeToOrder } = req.body;
   const connection = await db.getConnection();
   try {
     await connection.beginTransaction();
@@ -279,8 +280,8 @@ app.put('/api/products/:id', async (req, res) => {
     const formattedPromoExpiry = promoExpiry ? new Date(promoExpiry).toISOString().slice(0, 19).replace('T', ' ') : null;
 
     await connection.query(
-      'UPDATE products SET name = ?, description = ?, price = ?, image = ?, category_id = ?, is_promo = ?, original_price = ?, promo_expiry = ?, promo_stock = ? WHERE id = ?',
-      [name, description, price, mainImage, category, isPromo, originalPrice || null, formattedPromoExpiry, promoStock !== undefined ? promoStock : null, req.params.id]
+      'UPDATE products SET name = ?, description = ?, price = ?, image = ?, category_id = ?, is_promo = ?, original_price = ?, promo_expiry = ?, promo_stock = ?, is_made_to_order = ? WHERE id = ?',
+      [name, description, price, mainImage, category, isPromo, originalPrice || null, formattedPromoExpiry, promoStock !== undefined ? promoStock : null, isMadeToOrder || false, req.params.id]
     );
     
     // Deleta as imagens antigas e re-insere
@@ -366,7 +367,8 @@ app.get('/api/store/settings', async (req, res) => {
       accepts_card: 1,
       opening_time: "10:00",
       closing_time: "22:00",
-      delivery_fee: 0.00
+      delivery_fee: 0.00,
+      delivery_info_text: "Entregas apenas depois das 14:00"
     });
   } catch (error) {
     console.error(error);
@@ -378,19 +380,19 @@ app.put('/api/store/settings', async (req, res) => {
   const { 
     has_delivery, has_table, has_pickup, 
     accepts_pix, accepts_cash, accepts_card, 
-    opening_time, closing_time, delivery_fee 
+    opening_time, closing_time, delivery_fee, delivery_info_text 
   } = req.body;
   try {
     await db.query(
       `UPDATE store_settings SET 
         has_delivery = ?, has_table = ?, has_pickup = ?, 
         accepts_pix = ?, accepts_cash = ?, accepts_card = ?, 
-        opening_time = ?, closing_time = ?, delivery_fee = ? 
+        opening_time = ?, closing_time = ?, delivery_fee = ?, delivery_info_text = ? 
        WHERE id = 1`,
       [
         has_delivery ? 1 : 0, has_table ? 1 : 0, has_pickup ? 1 : 0,
         accepts_pix ? 1 : 0, accepts_cash ? 1 : 0, accepts_card ? 1 : 0,
-        opening_time, closing_time, delivery_fee
+        opening_time, closing_time, delivery_fee, delivery_info_text || "Entregas apenas depois das 14:00"
       ]
     );
     res.json({ message: 'Configurações atualizadas com sucesso' });
@@ -596,12 +598,13 @@ const initDbSettings = async () => {
         \`accepts_card\` TINYINT DEFAULT 1,
         \`opening_time\` VARCHAR(5) DEFAULT "10:00",
         \`closing_time\` VARCHAR(5) DEFAULT "22:00",
-        \`delivery_fee\` DECIMAL(10,2) DEFAULT 0.00
+        \`delivery_fee\` DECIMAL(10,2) DEFAULT 0.00,
+        \`delivery_info_text\` VARCHAR(255) DEFAULT "Entregas apenas depois das 14:00"
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `);
     await db.query(`
-      INSERT IGNORE INTO \`store_settings\` (id, has_delivery, has_table, has_pickup, accepts_pix, accepts_cash, accepts_card, opening_time, closing_time, delivery_fee)
-      VALUES (1, 1, 1, 1, 1, 1, 1, '10:00', '22:00', 0.00);
+      INSERT IGNORE INTO \`store_settings\` (id, has_delivery, has_table, has_pickup, accepts_pix, accepts_cash, accepts_card, opening_time, closing_time, delivery_fee, delivery_info_text)
+      VALUES (1, 1, 1, 1, 1, 1, 1, '10:00', '22:00', 0.00, 'Entregas apenas depois das 14:00');
     `);
     console.log("Banco de dados e tabela store_settings inicializados.");
   } catch (err) {

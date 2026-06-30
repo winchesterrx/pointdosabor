@@ -2,7 +2,7 @@ import { MessageCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { useCart } from "@/contexts/CartContext";
 
-const PHONE = "5517997799982";
+const PHONE = "5519999500807";
 const MESSAGE = encodeURIComponent(
   "Olá! 😊\nGostaria de fazer um pedido no *Bom Gosto Lanches*! 🍔🍟\nPoderia me ajudar?"
 );

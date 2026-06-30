@@ -3,6 +3,8 @@ import confeitariaBg from "@/assets/confeitaria-bg.png";
 import logoImg from "@/assets/logo.png";
 import { useCart } from "@/contexts/CartContext";
 import { NavLink } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { fetchStoreSettings } from "@/data/menuData";
 
 function getIsOpen(): boolean {
   const now = new Date();
@@ -15,6 +17,7 @@ interface Props {
 }
 
 export default function HeroHeader({ onCartOpen }: Props) {
+  const { data: storeSettings } = useQuery({ queryKey: ["storeSettings"], queryFn: fetchStoreSettings });
   const isOpen = getIsOpen();
   const { itemCount } = useCart();
   return (
@@ -92,9 +95,16 @@ export default function HeroHeader({ onCartOpen }: Props) {
             </span>
           </div>
 
-          <div className="flex items-center gap-1.5 text-white font-medium bg-[#2C1A11]/60 px-4 py-1.5 rounded-full backdrop-blur-sm">
-            <Clock size={14} />
-            <span className="text-sm">Seg a Dom • 10:00 – 22:00</span>
+          <div className="flex flex-col items-center gap-1.5 text-white font-medium bg-[#2C1A11]/60 px-4 py-2 rounded-2xl backdrop-blur-sm text-center">
+            <div className="flex items-center gap-1.5">
+              <Clock size={14} />
+              <span className="text-sm">Seg a Dom • {storeSettings?.opening_time || "10:00"} – {storeSettings?.closing_time || "22:00"}</span>
+            </div>
+            {storeSettings?.delivery_info_text && (
+              <span className="text-[11px] text-[#EFE0D3] italic border-t border-white/20 pt-1.5 w-full">
+                * {storeSettings.delivery_info_text}
+              </span>
+            )}
           </div>
         </div>
 
