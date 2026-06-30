@@ -4,7 +4,7 @@ import { useCart } from "@/contexts/CartContext";
 
 const PHONE = "5519999500807";
 const MESSAGE = encodeURIComponent(
-  "Olá! 😊\nGostaria de fazer um pedido no *Bom Gosto Lanches*! 🍔🍟\nPoderia me ajudar?"
+  "Olá! 😊\nGostaria de fazer um pedido na *Docinhos Gourmet*! 🍰🧁\nPoderia me ajudar?"
 );
 
 export default function WhatsAppButton() {

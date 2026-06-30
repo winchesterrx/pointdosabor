@@ -287,7 +287,7 @@ export default function CheckoutModal({ isOpen, onClose }: Props) {
     if (consume === "entrega") locationInfo = `\n📍 Endereço: ${address}`;
     else if (consume === "mesa") locationInfo = `\n🪑 Mesa: ${mesa}`;
 
-    let message = `🍽️ *NOVO PEDIDO #${realOrderNumber} - Bom Gosto Lanches*\n\n`;
+    let message = `🛍️ *NOVO PEDIDO #${realOrderNumber} - Docinhos Gourmet*\n\n`;
     message += `👤 *Cliente:* ${customerName.trim()}\n`;
     message += `📱 *WhatsApp:* ${customerWhatsApp}\n`;
     if (cleanCPF) {
