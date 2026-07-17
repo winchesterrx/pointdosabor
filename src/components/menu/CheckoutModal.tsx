@@ -267,6 +267,11 @@ export default function CheckoutModal({ isOpen, onClose }: Props) {
     }
 
     // Build WhatsApp message
+    const dataAtual = new Date().toLocaleString("pt-BR", {
+      dateStyle: "short",
+      timeStyle: "short",
+    });
+
     const itemLines = items
       .map((item) => {
         const pPrice = Number(item.product.price) || 0;
@@ -274,39 +279,51 @@ export default function CheckoutModal({ isOpen, onClose }: Props) {
         const aTotal = item.selectedAddons.reduce((s, sa) => s + (Number(sa.addon.price) || 0) * (Number(sa.quantity) || 0), 0);
         const itemFullTotal = (pPrice + aTotal) * iQty;
         
-        let line = `• ${iQty}x ${item.product.name} - R$ ${itemFullTotal.toFixed(2)}`;
+        let line = `🔸 *${iQty}x ${item.product.name}* - R$ ${itemFullTotal.toFixed(2)}`;
         if (item.selectedAddons.length > 0) {
-          line += `\n  Adicionais: ${item.selectedAddons.map((sa) => `${sa.quantity}x ${sa.addon.name}`).join(", ")}`;
+          line += `\n   |_ Adicionais: ${item.selectedAddons.map((sa) => `${sa.quantity}x ${sa.addon.name}`).join(", ")}`;
         }
-        if (item.notes) line += `\n  Obs: ${item.notes}`;
+        if (item.notes) line += `\n   |_ Obs: ${item.notes}`;
         return line;
       })
-      .join("\n");
+      .join("\n\n");
 
     let locationInfo = "";
-    if (consume === "entrega") locationInfo = `\n📍 Endereço: ${address}`;
-    else if (consume === "mesa") locationInfo = `\n🪑 Mesa: ${mesa}`;
+    if (consume === "entrega") locationInfo = `\n📍 *Endereço:* ${address}`;
+    else if (consume === "mesa") locationInfo = `\n🪑 *Mesa:* ${mesa}`;
 
-    let message = `🛍️ *NOVO PEDIDO #${realOrderNumber} - Point do Sabor*\n\n`;
+    let message = `───────────────────────\n`;
+    message += `🍔 *POINT DO SABOR* - NOVO PEDIDO\n`;
+    message += `───────────────────────\n\n`;
+    
+    message += `📋 *Pedido:* #${realOrderNumber}\n`;
+    message += `📅 *Data/Hora:* ${dataAtual}\n`;
     message += `👤 *Cliente:* ${customerName.trim()}\n`;
     message += `📱 *WhatsApp:* ${customerWhatsApp}\n`;
+    
     if (cleanCPF) {
       message += `🪪 *CPF:* ${customerCPF}\n`;
     }
-    message += `\n${itemLines}\n\n`;
+
+    message += `\n*RESUMO DO PEDIDO:*\n`;
+    message += `───────────────────────\n`;
+    message += `${itemLines}\n`;
+    message += `───────────────────────\n\n`;
     
     if (currentDeliveryFee > 0) {
-      message += `🛵 Taxa de Entrega: R$ ${currentDeliveryFee.toFixed(2)}\n`;
+      message += `🛵 *Taxa de Entrega:* R$ ${currentDeliveryFee.toFixed(2)}\n`;
     }
     if (discountValue > 0) {
-      message += `🎟️ Desconto Fidelidade: - R$ ${discountValue.toFixed(2)}\n`;
+      message += `🎟️ *Desconto Fidelidade:* - R$ ${discountValue.toFixed(2)}\n`;
     }
-    message += `💰 *Total: R$ ${finalTotal.toFixed(2)}*\n`;
-    message += `🛒 Consumo: ${consumeLabels[consume]}${locationInfo}\n`;
-    message += `💳 Pagamento: ${paymentLabels[payment]}`;
+    message += `💰 *TOTAL A PAGAR: R$ ${finalTotal.toFixed(2)}*\n\n`;
+    message += `───────────────────────\n`;
+    message += `🛒 *Tipo:* ${consumeLabels[consume]}${locationInfo}\n`;
+    message += `💳 *Pagamento:* ${paymentLabels[payment]}`;
+    
     if (payment === "dinheiro" && changeOption === "yes" && changeNeededFor) {
       const changeAmount = parseFloat(changeNeededFor) - finalTotal;
-      message += ` (Troco para R$ ${parseFloat(changeNeededFor).toFixed(2)} - Levar R$ ${changeAmount.toFixed(2)} de troco)`;
+      message += `\n💵 *Troco para:* R$ ${parseFloat(changeNeededFor).toFixed(2)} (Levar R$ ${changeAmount.toFixed(2)})`;
     }
 
     const encoded = encodeURIComponent(message);
