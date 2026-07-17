@@ -402,7 +402,7 @@ export default function Admin() {
                   const StatusIcon = st.icon;
                   const isExpanded = expandedOrder === order.id;
                   
-                  const currentStatusFlow = order.consumeType === "entrega" 
+                  const currentStatusFlow = order.consumeType?.toLowerCase() === "entrega" 
                     ? ["recebido", "confirmado", "preparando", "pronto", "saiu_entrega", "entregue"] as OrderStatus[]
                     : ["recebido", "confirmado", "preparando", "pronto", "entregue"] as OrderStatus[];
                   
@@ -469,7 +469,7 @@ export default function Admin() {
                                 <MessageCircle size={14} /> Confirmar & Notificar
                               </button>
                             )}
-                            {order.status === "pronto" && order.consumeType === "entrega" && (
+                            {order.status === "pronto" && order.consumeType?.toLowerCase() === "entrega" && (
                               <button onClick={() => { handleUpdateOrderStatus(order.id, "saiu_entrega"); handleSendDelivery(order); }}
                                 className="bg-secondary text-secondary-foreground text-xs font-medium px-4 py-2 rounded-lg flex items-center gap-1">
                                 <MessageCircle size={14} /> Saiu p/ Entrega & Notificar
