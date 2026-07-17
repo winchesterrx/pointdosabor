@@ -14,9 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        display: ['Playfair Display', 'serif'],
+        display: ['Fredoka', 'sans-serif'],
         body: ['Outfit', 'sans-serif'],
-        signature: ['Alex Brush', 'cursive'],
       },
       colors: {
         border: "hsl(var(--border))",

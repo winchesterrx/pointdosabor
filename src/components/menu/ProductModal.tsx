@@ -248,7 +248,7 @@ export default function ProductModal({ product, onClose }: Props) {
                <button
                   onClick={() => {
                      const message = encodeURIComponent(`Olá, gostaria de saber mais informações e fazer a encomenda do produto: *${product.name}*.`);
-                     window.open(`https://wa.me/5519999500807?text=${message}`, '_blank');
+                     window.open(`https://wa.me/5517997590846?text=${message}`, '_blank');
                   }}
                   className="w-full bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold px-5 py-3 rounded-xl text-sm shadow-card active:scale-95 transition-transform flex items-center justify-center gap-2"
                 >

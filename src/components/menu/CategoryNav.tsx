@@ -21,12 +21,28 @@ const iconMap: Record<string, React.ElementType> = {
 };
 
 interface Props {
-  active: string;
-  onSelect: (id: string) => void;
+  active?: string;
+  onSelect?: (id: string) => void;
 }
 
 export default function CategoryNav({ active, onSelect }: Props) {
   const { data: categories = [] } = useQuery({ queryKey: ['categories'], queryFn: fetchCategories });
+
+  const handleClick = (id: string) => {
+    if (onSelect) {
+      onSelect(id);
+    }
+    const element = document.getElementById(`category-${id}`);
+    if (element) {
+      const headerOffset = 100;
+      const elementPosition = element.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.scrollY - headerOffset;
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: "smooth"
+      });
+    }
+  };
 
   return (
     <div className="sticky top-0 z-30 bg-card/95 backdrop-blur-md border-b border-border shadow-card">
@@ -50,7 +66,7 @@ export default function CategoryNav({ active, onSelect }: Props) {
           return (
             <button
               key={cat.id}
-              onClick={() => onSelect(cat.id)}
+              onClick={() => handleClick(cat.id)}
               className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium whitespace-nowrap transition-all ${
                 active === cat.id
                   ? "bg-primary text-primary-foreground shadow-card"

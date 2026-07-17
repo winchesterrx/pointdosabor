@@ -1,73 +1,58 @@
-# Welcome to your Lovable project
+# 🍦 Point do Sabor — Sorveteria e Lanchonete
 
-## Project info
+Cardápio digital para o **Point do Sabor**, sorveteria e lanchonete em Álvares Florence, SP.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## 📍 Informações
+- **Endereço**: Rua Padre Diderico Michels, Álvares Florence - SP, 15540-000
+- **Horário**: Segunda a Domingo, 13h às 22h
+- **WhatsApp**: +55 17 99759-0846
 
-## How can I edit this code?
+## 🛠️ Tecnologias
+- **Frontend**: React + TypeScript + Vite + Tailwind CSS + shadcn/ui
+- **Backend**: Node.js + Express
+- **Banco de Dados**: MySQL (UH Server)
 
-There are several ways of editing your application.
+## 🚀 Como rodar
 
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+### Frontend
+```bash
+npm install
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+### Backend
+```bash
+cd backend
+npm install
+node server.js
+```
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Banco de Dados
+1. O banco `pointdosorvete` já está criado no UH Server
+2. Execute o SQL para criar as tabelas:
+   ```bash
+   # Importe o arquivo pointdosabor.sql no phpMyAdmin ou MySQL CLI
+   mysql -h pointdosorvete.mysql.uhserver.com -u pointdosorvete -p pointdosorvete < pointdosabor.sql
+   ```
+3. Ou rode o seed via Node.js (após as tabelas existirem):
+   ```bash
+   cd backend
+   node seed-pointdosabor.js
+   ```
 
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+## 📁 Estrutura
+```
+├── src/
+│   ├── assets/          # Imagens (logo, backgrounds, produtos)
+│   ├── components/menu/ # Componentes do cardápio
+│   ├── data/menuData.ts # Dados e API helpers
+│   ├── pages/           # Páginas (Index, Admin, Pedidos, Fidelidade)
+│   └── contexts/        # Cart context
+├── backend/
+│   ├── server.js        # API Express
+│   ├── db.js            # Conexão MySQL
+│   ├── .env             # Credenciais do banco
+│   └── seed-pointdosabor.js  # Script de seed
+├── pointdosabor.sql     # Schema completo com dados iniciais
+└── index.html           # Entry point
+```

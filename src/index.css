@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Alex+Brush&family=Outfit:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,81 +6,91 @@
 
 @layer base {
   :root {
-    --background: 22 45% 98%;
-    --foreground: 19 45% 12%;
+    /* ── Point do Sabor — Paleta baseada na logo ── */
+    --background: 195 20% 97%;
+    --foreground: 200 45% 12%;
 
     --card: 0 0% 100%;
-    --card-foreground: 19 45% 12%;
+    --card-foreground: 200 45% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 19 45% 12%;
+    --popover-foreground: 200 45% 12%;
 
-    --primary: 25 47% 38%;
+    /* Azul petróleo — cor principal da logo */
+    --primary: 195 55% 42%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 19 45% 12%;
-    --secondary-foreground: 22 45% 98%;
+    /* Vermelho bordeaux — faixa/banner da logo */
+    --secondary: 345 55% 38%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 24 35% 92%;
-    --muted-foreground: 19 25% 40%;
+    --muted: 195 15% 92%;
+    --muted-foreground: 200 20% 42%;
 
-    --accent: 25 47% 38%;
-    --accent-foreground: 0 0% 100%;
+    /* Amarelo dourado — do hambúrguer/sorvete na logo */
+    --accent: 40 85% 55%;
+    --accent-foreground: 0 0% 10%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 24 30% 90%;
-    --input: 24 30% 90%;
-    --ring: 25 47% 38%;
+    --border: 195 15% 90%;
+    --input: 195 15% 90%;
+    --ring: 195 55% 42%;
 
     --radius: 0.75rem;
 
-    --sidebar-background: 22 45% 98%;
-    --sidebar-foreground: 19 45% 12%;
-    --sidebar-primary: 25 47% 38%;
+    --sidebar-background: 195 20% 97%;
+    --sidebar-foreground: 200 45% 12%;
+    --sidebar-primary: 195 55% 42%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 24 35% 92%;
-    --sidebar-accent-foreground: 19 45% 12%;
-    --sidebar-border: 24 30% 90%;
-    --sidebar-ring: 25 47% 38%;
+    --sidebar-accent: 195 15% 92%;
+    --sidebar-accent-foreground: 200 45% 12%;
+    --sidebar-border: 195 15% 90%;
+    --sidebar-ring: 195 55% 42%;
 
-    --font-display: 'Playfair Display', serif;
+    --font-display: 'Fredoka', sans-serif;
     --font-body: 'Outfit', sans-serif;
-    --font-signature: 'Alex Brush', cursive;
 
-    --shadow-card: 0 2px 12px -2px hsl(0 0% 0% / 0.08);
-    --shadow-elevated: 0 8px 30px -4px hsl(0 0% 0% / 0.12);
+    --shadow-card: 0 2px 12px -2px hsl(200 30% 20% / 0.08);
+    --shadow-elevated: 0 8px 30px -4px hsl(200 30% 20% / 0.14);
+
+    /* Cores temáticas do Point do Sabor */
+    --color-teal: 195 55% 42%;
+    --color-bordeaux: 345 55% 38%;
+    --color-golden: 40 85% 55%;
+    --color-mint: 160 45% 50%;
+    --color-pink: 340 65% 60%;
   }
 
   .dark {
-    --background: 0 0% 6%;
-    --foreground: 0 0% 95%;
-    --card: 0 0% 10%;
-    --card-foreground: 0 0% 95%;
-    --popover: 0 0% 10%;
-    --popover-foreground: 0 0% 95%;
-    --primary: 0 85% 50%;
+    --background: 200 25% 7%;
+    --foreground: 195 15% 95%;
+    --card: 200 20% 11%;
+    --card-foreground: 195 15% 95%;
+    --popover: 200 20% 11%;
+    --popover-foreground: 195 15% 95%;
+    --primary: 195 60% 48%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 20%;
-    --secondary-foreground: 0 0% 95%;
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 60%;
-    --accent: 45 100% 51%;
+    --secondary: 345 50% 42%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 200 15% 16%;
+    --muted-foreground: 195 10% 60%;
+    --accent: 40 80% 52%;
     --accent-foreground: 0 0% 8%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 95%;
-    --border: 0 0% 18%;
-    --input: 0 0% 18%;
-    --ring: 0 85% 50%;
-    --sidebar-background: 0 0% 8%;
-    --sidebar-foreground: 0 0% 90%;
-    --sidebar-primary: 0 85% 50%;
+    --border: 200 15% 18%;
+    --input: 200 15% 18%;
+    --ring: 195 60% 48%;
+    --sidebar-background: 200 20% 9%;
+    --sidebar-foreground: 195 10% 90%;
+    --sidebar-primary: 195 60% 48%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 12%;
-    --sidebar-accent-foreground: 0 0% 90%;
-    --sidebar-border: 0 0% 15%;
-    --sidebar-ring: 0 85% 50%;
+    --sidebar-accent: 200 15% 14%;
+    --sidebar-accent-foreground: 195 10% 90%;
+    --sidebar-border: 200 15% 16%;
+    --sidebar-ring: 195 60% 48%;
   }
 }
 
@@ -104,7 +114,7 @@
 
   h1, h2, h3 {
     font-family: var(--font-display);
-    letter-spacing: 0.02em;
+    letter-spacing: 0.01em;
   }
 }
 
@@ -124,5 +134,12 @@
   }
   .safe-area-bottom {
     padding-bottom: env(safe-area-inset-bottom);
+  }
+  /* Gradiente temático do Point do Sabor */
+  .gradient-point {
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--color-teal)) 50%, hsl(var(--color-mint)) 100%);
+  }
+  .gradient-warm {
+    background: linear-gradient(135deg, hsl(var(--secondary)) 0%, hsl(var(--color-pink)) 50%, hsl(var(--accent)) 100%);
   }
 }

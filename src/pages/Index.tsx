@@ -12,20 +12,20 @@ import FloatingCart from "@/components/menu/FloatingCart";
 import CheckoutModal from "@/components/menu/CheckoutModal";
 import BottomNav from "@/components/menu/BottomNav";
 import WhatsAppButton from "@/components/menu/WhatsAppButton";
+import SubCategoryNav from "@/components/menu/SubCategoryNav";
+import { fetchCategories } from "@/data/menuData";
 
 const Index = () => {
   const { data: products = [] } = useQuery({ queryKey: ['products'], queryFn: fetchProducts });
-  const [activeCategory, setActiveCategory] = useState("todos");
+  const { data: categories = [] } = useQuery({ queryKey: ['categories'], queryFn: fetchCategories });
+  const [activeCategory, setActiveCategory] = useState("todos"); // Only used for visual highlight in top nav
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [showCheckout, setShowCheckout] = useState(false);
+  const [activeSubCategories, setActiveSubCategories] = useState<Record<string, string>>({});
 
-  const filteredProducts = useMemo(
-    () =>
-      activeCategory === "todos"
-        ? products
-        : products.filter((p) => p.category === activeCategory),
-    [products, activeCategory]
-  );
+  const handleSubCategorySelect = (categoryId: string, subCategory: string) => {
+    setActiveSubCategories(prev => ({ ...prev, [categoryId]: subCategory }));
+  };
 
   return (
     <div className="min-h-screen bg-background pb-[150px] lg:pb-0 w-full overflow-x-hidden">
@@ -38,16 +38,48 @@ const Index = () => {
         <CategoryNav active={activeCategory} onSelect={setActiveCategory} />
 
         <div className="px-3 sm:px-0 mt-4 md:mt-8">
-          <h2 className="text-xl md:text-2xl font-display text-foreground mb-4">
-            {activeCategory === "todos"
-              ? "Cardápio Completo"
-              : activeCategory.charAt(0).toUpperCase() + activeCategory.slice(1)}
-          </h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4 lg:gap-6">
-            {filteredProducts.map((p) => (
-              <ProductCard key={p.id} product={p} onSelect={setSelectedProduct} />
-            ))}
-          </div>
+          
+          {categories.map((category) => {
+            const categoryProducts = products.filter(p => p.category === category.id);
+            if (categoryProducts.length === 0) return null;
+
+            // Extract unique subcategories
+            const subCategoriesSet = new Set(
+              categoryProducts
+                .map(p => p.subCategory)
+                .filter(sub => sub && sub.trim() !== "")
+            );
+            const subCategories = Array.from(subCategoriesSet) as string[];
+            
+            const activeSub = activeSubCategories[category.id] || "todos";
+            const displayedProducts = activeSub === "todos" 
+              ? categoryProducts 
+              : categoryProducts.filter(p => p.subCategory === activeSub);
+
+            return (
+              <div key={category.id} id={`category-${category.id}`} className="mb-10 pt-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <h2 className="text-2xl md:text-3xl font-display font-bold text-foreground relative z-10 inline-block">
+                    {category.name}
+                    <div className="absolute -bottom-1 left-0 right-0 h-2 bg-primary/20 rounded-full -z-10" />
+                  </h2>
+                </div>
+                
+                {/* Internal Filter Pills for this Section */}
+                <SubCategoryNav 
+                  subCategories={subCategories} 
+                  active={activeSub} 
+                  onSelect={(sub) => handleSubCategorySelect(category.id, sub)} 
+                />
+
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4 lg:gap-6">
+                  {displayedProducts.map((p) => (
+                    <ProductCard key={p.id} product={p} onSelect={setSelectedProduct} />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 

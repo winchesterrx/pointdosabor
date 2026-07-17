@@ -1,13 +1,8 @@
-import brigadeiroGourmet from "@/assets/brigadeiro-gourmet.png";
-import beijinhoTrufado from "@/assets/beijinho-trufado.png";
-import coxinhaMorango from "@/assets/coxinha-morango.png";
-import boloPoteNinho from "@/assets/bolo-pote-ninho.png";
-import boloPoteCenoura from "@/assets/bolo-pote-cenoura.png";
-import copoFelicidade from "@/assets/copo-felicidade.png";
-import croissantDoce from "@/assets/croissant-doce.png";
-import capuccinoCream from "@/assets/capuccino-cream.png";
-import pinkLemonade from "@/assets/pink-lemonade.png";
-import espressoItaliano from "@/assets/espresso-italiano.png";
+import sorveteCasquinha from "@/assets/sorvete-casquinha.png";
+import sundaeChocolate from "@/assets/sundae-chocolate.png";
+import milkshakeMorango from "@/assets/milkshake-morango.png";
+import acaiBowl from "@/assets/acai-bowl.png";
+import xBaconBurger from "@/assets/x-bacon-burger.png";
 
 export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
@@ -56,6 +51,7 @@ export interface Product {
   promoStock?: number;
   orderCount: number;
   isMadeToOrder?: boolean;
+  subCategory?: string;
 }
 
 export interface CartItem {
@@ -107,13 +103,12 @@ export interface Order {
 
 // ── Categories ──
 export const defaultCategories: Category[] = [
-  { id: "docinhos", name: "Docinhos Gourmet", icon: "ice-cream" },
-  { id: "bolos", name: "Bolos & Tortas", icon: "cake-slice" },
-  { id: "copos", name: "Copos da Felicidade", icon: "crown" },
-  { id: "bebidas", name: "Cafés & Bebidas", icon: "coffee" },
+  { id: "lanches", name: "Lanches & Porções", icon: "sandwich" },
+  { id: "doces", name: "Sorvetes & Doces", icon: "ice-cream" },
+  { id: "bebidas", name: "Bebidas", icon: "coffee" },
 ];
 
-const CATEGORIES_KEY = "digitalmenu_categories_v1";
+const CATEGORIES_KEY = "pointdosabor_categories_v1";
 
 export function getCategories(): Category[] {
   const stored = localStorage.getItem(CATEGORIES_KEY);
@@ -141,11 +136,24 @@ export async function fetchCategories(): Promise<Category[]> {
 
 // ── Addons ──
 export const defaultAddons: Addon[] = [
-  { id: "nutella", name: "Nutella Extra", price: 4.0, categoryIds: ["docinhos", "bolos", "copos"] },
-  { id: "morango", name: "Morango Extra", price: 3.0, categoryIds: ["docinhos", "bolos", "copos"] },
-  { id: "leite-ninho", name: "Leite Ninho Extra", price: 2.0, categoryIds: ["docinhos", "bolos", "copos"] },
-  { id: "kinder-bueno", name: "Kinder Bueno Extra", price: 5.0, categoryIds: ["bolos", "copos"] },
-  { id: "calda-caramelo", name: "Calda de Caramelo", price: 1.5, categoryIds: ["bolos", "copos", "bebidas"] },
+  { id: "cobertura-choc", name: "Cobertura de Chocolate", price: 2.0, categoryIds: ["sorvetes", "sobremesas"] },
+  { id: "cobertura-morango", name: "Cobertura de Morango", price: 2.0, categoryIds: ["sorvetes", "sobremesas"] },
+  { id: "cobertura-caramelo", name: "Cobertura de Caramelo", price: 2.0, categoryIds: ["sorvetes", "sobremesas"] },
+  { id: "granulado", name: "Granulado", price: 1.5, categoryIds: ["sorvetes", "sobremesas"] },
+  { id: "chantilly", name: "Chantilly", price: 2.5, categoryIds: ["sorvetes", "sobremesas", "bebidas"] },
+  { id: "leite-condensado", name: "Leite Condensado", price: 2.0, categoryIds: ["sorvetes", "acai", "sobremesas"] },
+  { id: "leite-ninho", name: "Leite Ninho", price: 3.0, categoryIds: ["sorvetes", "acai", "sobremesas"] },
+  { id: "granola", name: "Granola", price: 2.5, categoryIds: ["acai", "sorvetes"] },
+  { id: "banana", name: "Banana", price: 2.0, categoryIds: ["acai", "sorvetes"] },
+  { id: "morango", name: "Morango Extra", price: 3.5, categoryIds: ["acai", "sorvetes", "sobremesas"] },
+  { id: "pacoca", name: "Paçoca", price: 2.0, categoryIds: ["acai", "sorvetes"] },
+  { id: "confete", name: "Confete", price: 2.5, categoryIds: ["sorvetes", "sobremesas"] },
+  { id: "bacon", name: "Bacon", price: 5.0, categoryIds: ["lanches", "porcoes"] },
+  { id: "queijo-extra", name: "Queijo Extra", price: 4.0, categoryIds: ["lanches", "porcoes"] },
+  { id: "ovo", name: "Ovo", price: 3.0, categoryIds: ["lanches"] },
+  { id: "cheddar", name: "Cheddar", price: 4.5, categoryIds: ["lanches", "porcoes"] },
+  { id: "salada", name: "Salada Extra", price: 2.0, categoryIds: ["lanches"] },
+  { id: "catupiry", name: "Catupiry", price: 4.0, categoryIds: ["lanches", "porcoes"] },
 ];
 
 const ADDONS_KEY = "digitalmenu_addons_v1";
@@ -180,25 +188,65 @@ export function getAddonsForCategory(categoryId: string): Addon[] {
 
 // ── Products ──
 const imageMap: Record<string, string> = {
-  "1": brigadeiroGourmet, "2": beijinhoTrufado, "3": coxinhaMorango, "4": boloPoteNinho,
-  "5": boloPoteCenoura, "6": copoFelicidade, "7": croissantDoce, "8": capuccinoCream,
-  "9": pinkLemonade, "10": espressoItaliano,
+  "1": sorveteCasquinha, "2": sorveteCasquinha, "3": sorveteCasquinha,
+  "4": sundaeChocolate, "5": sundaeChocolate,
+  "6": milkshakeMorango, "7": milkshakeMorango,
+  "8": acaiBowl, "9": acaiBowl, "10": acaiBowl, "11": acaiBowl,
+  "12": xBaconBurger, "13": xBaconBurger, "14": xBaconBurger, "15": xBaconBurger,
+  "16": xBaconBurger, "17": xBaconBurger,
 };
 
+const sorveteAddons = defaultAddons.filter(a => a.categoryIds.includes("sorvetes"));
+const acaiAddons = defaultAddons.filter(a => a.categoryIds.includes("acai"));
+const lancheAddons = defaultAddons.filter(a => a.categoryIds.includes("lanches"));
+const sobremesaAddons = defaultAddons.filter(a => a.categoryIds.includes("sobremesas"));
+
 export const defaultProducts: Product[] = [
-  { id: "1", name: "Brigadeiro Gourmet Belga", description: "Brigadeiro tradicional feito com cacau belga 54% e granulado nobre", price: 4.5, image: brigadeiroGourmet, category: "docinhos", addons: defaultAddons.slice(0, 3), isPromo: true, orderCount: 412 },
-  { id: "2", name: "Beijinho Trufado", description: "Doce de coco com textura cremosa e cobertura de coco ralado fino", price: 4.5, image: beijinhoTrufado, category: "docinhos", addons: defaultAddons.slice(0, 3), isPromo: false, orderCount: 289 },
-  { id: "3", name: "Coxinha de Morango", description: "Morango inteiro fresco envolto em brigadeiro gourmet de leite ninho", price: 8.0, image: coxinhaMorango, category: "docinhos", addons: defaultAddons.slice(0, 3), isPromo: true, orderCount: 384 },
-  { id: "4", name: "Bolo no Pote Ninho com Nutella", description: "Camadas de bolo de chocolate molhadinho com creme de leite Ninho e Nutella pura", price: 15.0, image: boloPoteNinho, category: "bolos", addons: defaultAddons, isPromo: true, orderCount: 512 },
-  { id: "5", name: "Bolo no Pote Cenoura com Brigadeiro", description: "Bolo de cenoura fofinho com uma cobertura generosa de brigadeiro gourmet cremoso", price: 15.0, image: boloPoteCenoura, category: "bolos", addons: defaultAddons, isPromo: false, orderCount: 265 },
-  { id: "6", name: "Copo da Felicidade Supremo", description: "Copo repleto de brigadeiro belga, creme de Ninho, morangos frescos e pedaços de Kinder Bueno", price: 18.0, image: copoFelicidade, category: "copos", addons: defaultAddons, isPromo: true, orderCount: 689 },
-  { id: "7", name: "Croissant de Nutella e Morango", description: "Croissant folhado super crocante recheado com creme de avelã e fatias de morango", price: 16.5, image: croissantDoce, category: "bolos", addons: defaultAddons.slice(0, 3), isPromo: false, orderCount: 145 },
-  { id: "8", name: "Capuccino Cream", description: "Espresso curto servido com leite vaporizado cremoso, chantilly e raspas de chocolate belga", price: 12.0, image: capuccinoCream, category: "bebidas", addons: [defaultAddons[4]], isPromo: false, orderCount: 320 },
-  { id: "9", name: "Pink Lemonade", description: "Bebida refrescante com limão siciliano, água com gás e xarope de frutas vermelhas caseiro", price: 10.0, image: pinkLemonade, category: "bebidas", addons: [], isPromo: false, orderCount: 245 },
-  { id: "10", name: "Espresso Italiano", description: "Café espresso tradicional tirado na hora com grãos selecionados", price: 6.0, image: espressoItaliano, category: "bebidas", addons: [], isPromo: false, orderCount: 189, isMadeToOrder: true },
+  // Lanches & Porções - Hambúrgueres
+  { id: "12", name: "X-Burguer", description: "Pão artesanal, hambúrguer bovino 150g, queijo, alface e tomate", price: 22.0, image: xBaconBurger, category: "lanches", subCategory: "Hambúrgueres", addons: lancheAddons, isPromo: false, orderCount: 410 },
+  { id: "13", name: "X-Bacon", description: "Pão artesanal, hambúrguer bovino 150g, bacon crocante, queijo e molho especial", price: 28.0, image: xBaconBurger, category: "lanches", subCategory: "Hambúrgueres", addons: lancheAddons, isPromo: true, orderCount: 380 },
+  { id: "14", name: "X-Tudo", description: "Pão artesanal, hambúrguer duplo, bacon, ovo, cheddar, alface, tomate e milho", price: 35.0, image: xBaconBurger, category: "lanches", subCategory: "Hambúrgueres", addons: lancheAddons, isPromo: false, orderCount: 290 },
+  
+  // Lanches & Porções - Frango
+  { id: "15", name: "X-Frango", description: "Pão artesanal, filé de frango grelhado, queijo, alface e maionese da casa", price: 25.0, image: xBaconBurger, category: "lanches", subCategory: "Frango", addons: lancheAddons, isPromo: false, orderCount: 220 },
+  
+  // Lanches & Porções - Hot Dogs
+  { id: "16", name: "Hot Dog Tradicional", description: "Pão de hot dog, duas salsichas, vinagrete, batata palha e molhos", price: 15.0, image: xBaconBurger, category: "lanches", subCategory: "Hot Dogs", addons: lancheAddons.slice(0, 4), isPromo: false, orderCount: 350 },
+  { id: "17", name: "Hot Dog Especial", description: "Pão de hot dog, duas salsichas, cheddar, bacon, milho, ervilha e batata palha", price: 22.0, image: xBaconBurger, category: "lanches", subCategory: "Hot Dogs", addons: lancheAddons, isPromo: true, orderCount: 280 },
+
+  // Lanches & Porções - Porções
+  { id: "18", name: "Batata Frita", description: "Porção generosa de batata frita crocante com sal e temperos", price: 18.0, image: xBaconBurger, category: "lanches", subCategory: "Porções", addons: defaultAddons.filter(a => a.categoryIds.includes("porcoes")), isPromo: false, orderCount: 390 },
+  { id: "19", name: "Batata com Cheddar e Bacon", description: "Batata frita coberta com cheddar cremoso e bacon crocante", price: 28.0, image: xBaconBurger, category: "lanches", subCategory: "Porções", addons: defaultAddons.filter(a => a.categoryIds.includes("porcoes")), isPromo: true, orderCount: 310 },
+
+  // Sorvetes & Doces - Sorvetes
+  { id: "1", name: "Sorvete 1 Bola", description: "Uma bola de sorvete artesanal no sabor à sua escolha servida na casquinha ou copinho", price: 8.0, image: sorveteCasquinha, category: "doces", subCategory: "Sorvetes", addons: sorveteAddons, isPromo: false, orderCount: 520, isMadeToOrder: true },
+  { id: "2", name: "Sorvete 2 Bolas", description: "Duas bolas de sorvete artesanal nos sabores à sua escolha", price: 14.0, image: sorveteCasquinha, category: "doces", subCategory: "Sorvetes", addons: sorveteAddons, isPromo: false, orderCount: 430, isMadeToOrder: true },
+  { id: "3", name: "Sorvete 3 Bolas", description: "Três bolas de sorvete artesanal nos sabores à sua escolha com cobertura grátis", price: 18.0, image: sorveteCasquinha, category: "doces", subCategory: "Sorvetes", addons: sorveteAddons, isPromo: true, orderCount: 380, isMadeToOrder: true },
+  { id: "4", name: "Sundae de Chocolate", description: "Sorvete de creme com calda quente de chocolate belga, chantilly e granulado", price: 22.0, image: sundaeChocolate, category: "doces", subCategory: "Sorvetes", addons: sorveteAddons, isPromo: true, orderCount: 290, isMadeToOrder: true },
+  { id: "5", name: "Sundae de Morango", description: "Sorvete de morango com calda de frutas vermelhas, chantilly e morango fresco", price: 22.0, image: sundaeChocolate, category: "doces", subCategory: "Sorvetes", addons: sorveteAddons, isPromo: false, orderCount: 245, isMadeToOrder: true },
+  
+  // Sorvetes & Doces - Milk-Shakes
+  { id: "6", name: "Milk-Shake Chocolate", description: "Cremoso milk-shake de chocolate com sorvete artesanal e chantilly", price: 18.0, image: milkshakeMorango, category: "doces", subCategory: "Milk-Shakes", addons: sorveteAddons.slice(0, 5), isPromo: false, orderCount: 310, isMadeToOrder: true },
+  { id: "7", name: "Milk-Shake Morango", description: "Milk-shake de morango natural com sorvete e chantilly", price: 18.0, image: milkshakeMorango, category: "doces", subCategory: "Milk-Shakes", addons: sorveteAddons.slice(0, 5), isPromo: false, orderCount: 280, isMadeToOrder: true },
+
+  // Sorvetes & Doces - Açaí & Bowls
+  { id: "8", name: "Açaí 300ml", description: "Açaí puro batido na hora, escolha seus acompanhamentos favoritos", price: 15.0, image: acaiBowl, category: "doces", subCategory: "Açaí & Bowls", addons: acaiAddons, isPromo: false, orderCount: 620, isMadeToOrder: true },
+  { id: "9", name: "Açaí 500ml", description: "Açaí puro batido na hora com acompanhamentos à sua escolha", price: 22.0, image: acaiBowl, category: "doces", subCategory: "Açaí & Bowls", addons: acaiAddons, isPromo: true, orderCount: 510, isMadeToOrder: true },
+  { id: "10", name: "Açaí 700ml", description: "Porção generosa de açaí puro com acompanhamentos inclusos", price: 28.0, image: acaiBowl, category: "doces", subCategory: "Açaí & Bowls", addons: acaiAddons, isPromo: false, orderCount: 340, isMadeToOrder: true },
+  { id: "11", name: "Bowl de Açaí Premium", description: "Açaí na tigela com granola, banana, morango, leite ninho e mel", price: 32.0, image: acaiBowl, category: "doces", subCategory: "Açaí & Bowls", addons: acaiAddons, isPromo: true, orderCount: 195, isMadeToOrder: true },
+
+  // Sorvetes & Doces - Sobremesas
+  { id: "27", name: "Banana Split", description: "Banana com 3 bolas de sorvete, caldas de chocolate e morango, chantilly e cereja", price: 28.0, image: sundaeChocolate, category: "doces", subCategory: "Sobremesas", addons: sobremesaAddons, isPromo: true, orderCount: 175, isMadeToOrder: true },
+  { id: "28", name: "Brownie com Sorvete", description: "Brownie quentinho de chocolate com bola de sorvete de creme e calda", price: 24.0, image: sundaeChocolate, category: "doces", subCategory: "Sobremesas", addons: sobremesaAddons, isPromo: false, orderCount: 210 },
+
+  // Bebidas
+  { id: "22", name: "Coca-Cola 350ml", description: "Refrigerante gelado", price: 7.0, image: "", category: "bebidas", subCategory: "Refrigerantes", addons: [], isPromo: false, orderCount: 680 },
+  { id: "23", name: "Guaraná Antarctica 350ml", description: "Refrigerante gelado", price: 6.5, image: "", category: "bebidas", subCategory: "Refrigerantes", addons: [], isPromo: false, orderCount: 420 },
+  { id: "24", name: "Suco Natural 500ml", description: "Suco natural da fruta, escolha: laranja, maracujá ou limão", price: 12.0, image: "", category: "bebidas", subCategory: "Sucos", addons: [], isPromo: false, orderCount: 260, isMadeToOrder: true },
+  { id: "25", name: "Água Mineral 500ml", description: "Água mineral gelada", price: 4.0, image: "", category: "bebidas", subCategory: "Sucos", addons: [], isPromo: false, orderCount: 530 },
 ];
 
-const STORAGE_KEY = "digitalmenu_products_v3";
+const STORAGE_KEY = "pointdosabor_products_v1";
 
 if (typeof window !== "undefined") {
   localStorage.removeItem("digitalmenu_products");
@@ -406,10 +454,10 @@ export async function fetchStoreSettings(): Promise<StoreSettings> {
       accepts_pix: 1,
       accepts_cash: 1,
       accepts_card: 1,
-      opening_time: "10:00",
+      opening_time: "13:00",
       closing_time: "22:00",
       delivery_fee: 0.00,
-      delivery_info_text: "Entregas apenas depois das 14:00"
+      delivery_info_text: ""
     };
   }
 }

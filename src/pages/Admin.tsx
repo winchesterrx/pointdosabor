@@ -276,7 +276,7 @@ export default function Admin() {
       .item{margin:4px 0}.total{font-size:16px;font-weight:bold;border-top:2px dashed #000;padding-top:8px;margin-top:8px}
       .info{font-size:12px;margin-top:8px;border-top:1px dashed #000;padding-top:8px}
       </style></head><body>
-      <h1>Doces Gourmet <br>Pedido #${order.number}</h1>
+      <h1>Point do Sabor <br>Pedido #${order.number}</h1>
       <p style="font-size:12px;text-align:center">${new Date(order.createdAt).toLocaleString("pt-BR")}</p>
       ${order.items.map((i) => `<div class="item"><strong>${i.quantity}x ${i.productName}</strong> - R$ ${(i.productPrice * i.quantity).toFixed(2)}${i.addons.length > 0 ? `<br>&nbsp;&nbsp;+ ${i.addons.map((a) => `${a.quantity}x ${a.name}`).join(", ")}` : ""}${i.notes ? `<br>&nbsp;&nbsp;<em>"${i.notes}"</em>` : ""}</div>`).join("")}
       <div class="total">TOTAL: R$ ${order.total.toFixed(2)}</div>
@@ -858,7 +858,7 @@ export default function Admin() {
           <div className="bg-card rounded-xl shadow-card p-6 space-y-6">
             <div>
               <h2 className="text-xl font-display text-foreground mb-1">Configurações Gerais da Loja</h2>
-              <p className="text-sm text-muted-foreground">Gerencie o funcionamento básico da doceria, como taxas, horários e formas de pagamento.</p>
+              <p className="text-sm text-muted-foreground">Gerencie o funcionamento básico da sorveteria e lanchonete, como taxas, horários e formas de pagamento.</p>
             </div>
 
             <div className="space-y-4">

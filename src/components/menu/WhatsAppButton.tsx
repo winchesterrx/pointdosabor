@@ -2,9 +2,9 @@ import { MessageCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { useCart } from "@/contexts/CartContext";
 
-const PHONE = "5519999500807";
+const PHONE = "5517997590846";
 const MESSAGE = encodeURIComponent(
-  "Olá! 😊\nGostaria de fazer um pedido na *Docinhos Gourmet*! 🍰🧁\nPoderia me ajudar?"
+  "Olá! 😊\nGostaria de fazer um pedido no *Point do Sabor*! 🍦🍔\nPoderia me ajudar?"
 );
 
 export default function WhatsAppButton() {

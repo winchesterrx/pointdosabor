@@ -287,7 +287,7 @@ export default function CheckoutModal({ isOpen, onClose }: Props) {
     if (consume === "entrega") locationInfo = `\n📍 Endereço: ${address}`;
     else if (consume === "mesa") locationInfo = `\n🪑 Mesa: ${mesa}`;
 
-    let message = `🛍️ *NOVO PEDIDO #${realOrderNumber} - Docinhos Gourmet*\n\n`;
+    let message = `🛍️ *NOVO PEDIDO #${realOrderNumber} - Point do Sabor*\n\n`;
     message += `👤 *Cliente:* ${customerName.trim()}\n`;
     message += `📱 *WhatsApp:* ${customerWhatsApp}\n`;
     if (cleanCPF) {
@@ -310,7 +310,7 @@ export default function CheckoutModal({ isOpen, onClose }: Props) {
     }
 
     const encoded = encodeURIComponent(message);
-    window.open(`https://wa.me/5519999500807?text=${encoded}`, "_blank");
+    window.open(`https://wa.me/5517997590846?text=${encoded}`, "_blank");
 
     clearCart();
     setStep("cart");
