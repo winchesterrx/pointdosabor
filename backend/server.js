@@ -613,6 +613,10 @@ const initDbSettings = async () => {
 };
 initDbSettings();
 
-app.listen(PORT, () => {
-  console.log(`Backend rodando na porta ${PORT}`);
-});
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`Backend rodando na porta ${PORT}`);
+  });
+}
+
+export default app;

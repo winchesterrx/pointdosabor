@@ -4,7 +4,7 @@ import milkshakeMorango from "@/assets/milkshake-morango.png";
 import acaiBowl from "@/assets/acai-bowl.png";
 import xBaconBurger from "@/assets/x-bacon-burger.png";
 
-export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+export const API_URL = import.meta.env.PROD ? '/api' : (import.meta.env.VITE_API_URL || 'http://localhost:3000/api');
 
 export const API = {
   async post(path: string, data: any) { 
