@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ClipboardList, Clock, CheckCircle2, ChevronLeft, Package, Truck, XCircle, Search } from "lucide-react";
+import { ClipboardList, Clock, CheckCircle2, ChevronLeft, Package, Truck, XCircle, Search, Bike } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import BottomNav from "@/components/menu/BottomNav";
 import { getOrdersByLookup, fetchOrdersByLookup } from "@/data/menuData";
@@ -11,11 +11,12 @@ const statusConfig: Record<OrderStatus, { label: string; icon: React.ElementType
   confirmado: { label: "Confirmado", icon: CheckCircle2, color: "text-cyan-500 bg-cyan-500/10" },
   preparando: { label: "Preparando", icon: Clock, color: "text-amber-500 bg-amber-500/10" },
   pronto: { label: "Pronto", icon: Package, color: "text-emerald-500 bg-emerald-500/10" },
+  saiu_entrega: { label: "Saiu para Entrega", icon: Bike, color: "text-purple-500 bg-purple-500/10" },
   entregue: { label: "Entregue", icon: Truck, color: "text-muted-foreground bg-muted" },
   cancelado: { label: "Cancelado", icon: XCircle, color: "text-destructive bg-destructive/10" },
 };
 
-const timelineOrder: OrderStatus[] = ["recebido", "confirmado", "preparando", "pronto", "entregue"];
+const timelineOrder: OrderStatus[] = ["recebido", "confirmado", "preparando", "pronto", "saiu_entrega", "entregue"];
 
 export default function Pedidos() {
   const navigate = useNavigate();

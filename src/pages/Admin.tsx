@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   LogIn, LogOut, Plus, Pencil, Trash2, BarChart3, Package, Star, Settings,
   ChevronLeft, LayoutGrid, ListPlus, ClipboardList, CheckCircle2, Clock,
-  Truck, XCircle, Printer, MessageCircle, Eye, Award, X
+  Truck, XCircle, Printer, MessageCircle, Eye, Award, X, Bike
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -29,11 +29,12 @@ const statusConfig: Record<OrderStatus, { label: string; icon: React.ElementType
   confirmado: { label: "Confirmado", icon: CheckCircle2, color: "text-cyan-500 bg-cyan-500/10" },
   preparando: { label: "Preparando", icon: Clock, color: "text-amber-500 bg-amber-500/10" },
   pronto: { label: "Pronto", icon: Package, color: "text-emerald-500 bg-emerald-500/10" },
+  saiu_entrega: { label: "Saiu p/ Entrega", icon: Bike, color: "text-purple-500 bg-purple-500/10" },
   entregue: { label: "Entregue", icon: Truck, color: "text-muted-foreground bg-muted" },
   cancelado: { label: "Cancelado", icon: XCircle, color: "text-destructive bg-destructive/10" },
 };
 
-const statusFlow: OrderStatus[] = ["recebido", "confirmado", "preparando", "pronto", "entregue"];
+const statusFlow: OrderStatus[] = ["recebido", "confirmado", "preparando", "pronto", "saiu_entrega", "entregue"];
 
 export default function Admin() {
   const navigate = useNavigate();
@@ -268,6 +269,13 @@ export default function Admin() {
     window.open(`https://wa.me/55${order.customerWhatsApp}?text=${message}`, "_blank");
   };
 
+  const handleSendDelivery = (order: Order) => {
+    const message = encodeURIComponent(
+      `🛵 *Seu pedido #${order.number} saiu para entrega!*\n\nOlá! O entregador já está a caminho do seu endereço.\n\n📍 ${order.address}\n\nPrepare-se para receber seu lanche bem quentinho! 🍔🏍️`
+    );
+    window.open(`https://wa.me/55${order.customerWhatsApp}?text=${message}`, "_blank");
+  };
+
   const handlePrintOrder = (order: Order) => {
     const printContent = `
       <html><head><title>Pedido #${order.number}</title>
@@ -393,8 +401,13 @@ export default function Admin() {
                   const st = statusConfig[order.status];
                   const StatusIcon = st.icon;
                   const isExpanded = expandedOrder === order.id;
-                  const currentIdx = statusFlow.indexOf(order.status);
-                  const nextStatus = currentIdx >= 0 && currentIdx < statusFlow.length - 1 ? statusFlow[currentIdx + 1] : null;
+                  
+                  const currentStatusFlow = order.consumeType === "entrega" 
+                    ? ["recebido", "confirmado", "preparando", "pronto", "saiu_entrega", "entregue"] as OrderStatus[]
+                    : ["recebido", "confirmado", "preparando", "pronto", "entregue"] as OrderStatus[];
+                  
+                  const currentIdx = currentStatusFlow.indexOf(order.status);
+                  const nextStatus = currentIdx >= 0 && currentIdx < currentStatusFlow.length - 1 ? currentStatusFlow[currentIdx + 1] : null;
 
                   return (
                     <div key={order.id} className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
@@ -411,7 +424,9 @@ export default function Admin() {
                         <p className="text-sm text-foreground">{order.items.map((i) => `${i.quantity}x ${i.productName}`).join(", ")}</p>
                         <div className="flex items-center justify-between mt-1">
                           <span className="text-primary font-bold text-sm">R$ {order.total.toFixed(2)}</span>
-                          <span className="text-[10px] text-muted-foreground">👤 {order.customerName || "Não informado"} · 📱 {order.customerWhatsApp}</span>
+                          <span className="text-[10px] text-muted-foreground">
+                            👤 {order.customerName || "Não informado"} · 📱 <a href={`https://wa.me/55${order.customerWhatsApp}`} target="_blank" rel="noreferrer" className="text-primary hover:underline">{order.customerWhatsApp}</a>
+                          </span>
                         </div>
                       </button>
 
@@ -452,6 +467,12 @@ export default function Admin() {
                               <button onClick={() => { handleUpdateOrderStatus(order.id, "confirmado"); handleSendConfirmation(order); }}
                                 className="bg-secondary text-secondary-foreground text-xs font-medium px-4 py-2 rounded-lg flex items-center gap-1">
                                 <MessageCircle size={14} /> Confirmar & Notificar
+                              </button>
+                            )}
+                            {order.status === "pronto" && order.consumeType === "entrega" && (
+                              <button onClick={() => { handleUpdateOrderStatus(order.id, "saiu_entrega"); handleSendDelivery(order); }}
+                                className="bg-secondary text-secondary-foreground text-xs font-medium px-4 py-2 rounded-lg flex items-center gap-1">
+                                <MessageCircle size={14} /> Saiu p/ Entrega & Notificar
                               </button>
                             )}
                             <button onClick={() => handlePrintOrder(order)}
