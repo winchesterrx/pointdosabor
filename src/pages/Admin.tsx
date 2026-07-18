@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Trash2, Edit2, Plus, Image as ImageIcon, Save, X, Utensils, Pizza, Beer, IceCream, Coffee, Cake, ClipboardList, CheckCircle2, Clock, XCircle, Search, LayoutGrid, ListPlus, Truck, Package, Settings, Star, Award, LogOut, Printer, BarChart3, Bike, ChevronLeft, LogIn, MessageCircle, Pencil
@@ -46,7 +46,7 @@ export default function Admin() {
   const { data: products = [], refetch: refetchProducts } = useQuery({ queryKey: ['products'], queryFn: fetchProducts });
   const { data: categories = [], refetch: refetchCategories } = useQuery({ queryKey: ['categories'], queryFn: fetchCategories });
   const { data: addons = [], refetch: refetchAddons } = useQuery({ queryKey: ['addons'], queryFn: fetchAddons });
-  const { data: orders = [], refetch: refetchOrders } = useQuery({ queryKey: ['orders'], queryFn: fetchOrders });
+  const { data: orders = [], refetch: refetchOrders } = useQuery({ queryKey: ['orders'], queryFn: fetchOrders, refetchInterval: 15000 });
   const [activeTab, setActiveTab] = useState<"dashboard" | "orders" | "products" | "categories" | "addons" | "promos" | "loyalty" | "settings">("dashboard");
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -56,12 +56,7 @@ export default function Admin() {
   useEffect(() => {
     const token = localStorage.getItem('pointdosabor_token');
     if (token) setIsLoggedIn(true);
-
-    const socket = io(API_URL.replace('/api', ''));
-    socket.on('new_order', () => refetchOrders());
-    socket.on('order_status_updated', () => refetchOrders());
-    return () => { socket.disconnect(); };
-  }, [refetchOrders]);
+  }, []);
 
   // Category form
   const [showCatForm, setShowCatForm] = useState(false);
@@ -379,6 +374,27 @@ export default function Admin() {
     const w = window.open("", "_blank");
     if (w) { w.document.write(printContent); w.document.close(); w.print(); }
   };
+
+  const knownOrderIds = useRef<Set<number>>(new Set());
+  const initialLoadDone = useRef(false);
+
+  useEffect(() => {
+    if (orders.length > 0) {
+      if (!initialLoadDone.current) {
+        orders.forEach(o => knownOrderIds.current.add(o.id));
+        initialLoadDone.current = true;
+      } else {
+        orders.forEach(order => {
+          if (!knownOrderIds.current.has(order.id)) {
+            knownOrderIds.current.add(order.id);
+            if (order.status === 'recebido') {
+              handlePrintOrder(order);
+            }
+          }
+        });
+      }
+    }
+  }, [orders]);
 
   const refreshOrders = () => refetchOrders();
 
