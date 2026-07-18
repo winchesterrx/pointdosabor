@@ -15,7 +15,7 @@ type ConsumeOption = "entrega" | "retirada" | "mesa";
 type PaymentOption = "credito" | "debito" | "pix" | "dinheiro";
 
 export default function CheckoutModal({ isOpen, onClose }: Props) {
-  const { items, removeItem, updateQuantity, clearCart, total } = useCart();
+  const { items, addItem, removeItem, updateQuantity, clearCart, total } = useCart();
   const [step, setStep] = useState<"cart" | "checkout">("cart");
   const [consume, setConsume] = useState<ConsumeOption>("entrega");
   const [payment, setPayment] = useState<PaymentOption>("pix");
