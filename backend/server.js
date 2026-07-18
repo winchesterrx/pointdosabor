@@ -2,6 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import db from './db.js';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcrypt';
 
 import fs from 'fs';
 import path from 'path';
@@ -10,6 +12,7 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const JWT_SECRET = process.env.JWT_SECRET || 'secreta_super_segura_aqui';
 
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
