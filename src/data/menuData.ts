@@ -67,7 +67,7 @@ export interface Category {
   icon: string;
 }
 
-export type OrderStatus = "recebido" | "confirmado" | "preparando" | "pronto" | "entregue" | "cancelado";
+export type OrderStatus = "recebido" | "confirmado" | "preparando" | "pronto" | "saiu_entrega" | "entregue" | "cancelado";
 
 export interface OrderTimeline {
   status: OrderStatus;
@@ -127,7 +127,9 @@ export async function fetchCategories(): Promise<Category[]> {
   try {
     const res = await fetch(`${API_URL}/categories`);
     if (!res.ok) throw new Error('Falha ao buscar categorias');
-    return await res.json();
+    const data = await res.json();
+    const orderMap: Record<string, number> = { lanches: 1, doces: 2, bebidas: 3 };
+    return data.sort((a: Category, b: Category) => (orderMap[a.id] || 99) - (orderMap[b.id] || 99));
   } catch (error) {
     console.error(error);
     return getCategories();
