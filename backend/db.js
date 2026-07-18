@@ -10,7 +10,8 @@ const pool = mysql.createPool({
   database: process.env.DB_NAME || 'appcardapio',
   waitForConnections: true,
   connectionLimit: 10,
-  queueLimit: 0
+  queueLimit: 0,
+  timezone: '-03:00'
 });
 
 export default pool;
