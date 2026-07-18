@@ -2,9 +2,9 @@ import { useState } from "react";
 import { X, Minus, Plus, Trash2, MessageCircle, ChevronRight, ShoppingBag } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCart } from "@/contexts/CartContext";
-import { addOrder, getNextOrderNumber, addOrderAsync, fetchCustomerPoints, fetchLoyaltySettings, fetchStoreSettings } from "@/data/menuData";
+import { addOrder, getNextOrderNumber, addOrderAsync, fetchCustomerPoints, fetchLoyaltySettings, fetchStoreSettings, getProducts } from "@/data/menuData";
 import type { Order, LoyaltySettings, StoreSettings } from "@/data/menuData";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 
 interface Props {
   isOpen: boolean;
@@ -98,9 +98,23 @@ export default function CheckoutModal({ isOpen, onClose }: Props) {
 
   const formatPhone = (value: string) => {
     const digits = value.replace(/\D/g, "").slice(0, 11);
-    if (digits.length <= 2) return digits;
-    if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
-    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+    if (digits.length > 2 && digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+    if (digits.length > 6) return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+    return digits;
+  };
+
+  // Upsell Logic
+  const { hasDrink, suggestedDrink } = useMemo(() => {
+    const hasDrink = items.some(i => i.product.category === "bebidas");
+    const products = getProducts();
+    const suggestedDrink = products.find(p => p.category === "bebidas" && p.name.toLowerCase().includes("coca"));
+    return { hasDrink, suggestedDrink };
+  }, [items]);
+
+  const addSuggestedDrink = () => {
+    if (suggestedDrink) {
+      addItem(suggestedDrink, []);
+    }
   };
 
   const subtotal = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
@@ -629,6 +643,20 @@ export default function CheckoutModal({ isOpen, onClose }: Props) {
         {/* Footer */}
         {items.length > 0 && step === "cart" && (
           <div className="border-t border-border p-5 bg-card">
+            {!hasDrink && suggestedDrink && (
+              <div className="mb-4 bg-primary/10 border border-primary/20 rounded-xl p-3 flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-primary">Que tal uma bebida?</p>
+                  <p className="text-xs text-primary/80">Adicione {suggestedDrink.name} por apenas R$ {suggestedDrink.price.toFixed(2)}</p>
+                </div>
+                <button 
+                  onClick={addSuggestedDrink}
+                  className="bg-primary text-primary-foreground px-3 py-1.5 rounded-lg text-sm hover:opacity-90 active:scale-95 transition-all flex items-center gap-1 font-medium"
+                >
+                  Adicionar
+                </button>
+              </div>
+            )}
             <div className="space-y-1 mb-3">
               <div className="flex justify-between text-sm text-muted-foreground">
                 <span>Subtotal</span><span>R$ {subtotal.toFixed(2)}</span>

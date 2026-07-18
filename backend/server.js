@@ -53,6 +53,63 @@ const saveBase64Image = async (base64Str) => {
   return `/uploads/${filename}`;
 };
 
+
+// Middleware JWT
+export const verifyToken = (req, res, next) => {
+  const token = req.headers['authorization'];
+  if (!token) return res.status(403).json({ error: 'Token não fornecido' });
+  jwt.verify(token.replace('Bearer ', ''), JWT_SECRET, (err, decoded) => {
+    if (err) return res.status(401).json({ error: 'Token inválido' });
+    req.userId = decoded.id;
+    next();
+  });
+};
+
+// Autenticação (Login)
+app.post('/api/login', async (req, res) => {
+  const { username, password } = req.body;
+  try {
+    const [rows] = await db.query('SELECT * FROM admins WHERE username = ?', [username]);
+    if (rows.length === 0) return res.status(401).json({ error: 'Usuário não encontrado' });
+    
+    const admin = rows[0];
+    const match = await bcrypt.compare(password, admin.password_hash);
+    if (!match) return res.status(401).json({ error: 'Senha incorreta' });
+    
+    const token = jwt.sign({ id: admin.id, username: admin.username }, JWT_SECRET, { expiresIn: '24h' });
+    res.json({ token, username: admin.username });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Erro no login' });
+  }
+});
+
+// Dashboard Stats
+app.get('/api/dashboard/stats', verifyToken, async (req, res) => {
+  try {
+    const [hojeRows] = await db.query(`
+      SELECT COUNT(*) as total_orders, SUM(total) as total_revenue
+      FROM orders 
+      WHERE DATE(created_at) = CURDATE() AND status != 'cancelado'
+    `);
+    
+    const [topProducts] = await db.query(`
+      SELECT product_name, SUM(quantity) as total_sold
+      FROM order_items oi
+      JOIN orders o ON oi.order_id = o.id
+      WHERE o.status != 'cancelado'
+      GROUP BY product_name
+      ORDER BY total_sold DESC
+      LIMIT 5
+    `);
+
+    res.json({ hoje: hojeRows[0], topProducts });
+  } catch(e) {
+    console.error(e);
+    res.status(500).json({ error: 'Erro ao buscar dashboard' });
+  }
+});
+
 // ── Categories ──
 app.get('/api/categories', async (req, res) => {
   try {
@@ -64,7 +121,7 @@ app.get('/api/categories', async (req, res) => {
   }
 });
 
-app.post('/api/categories', async (req, res) => {
+app.post('/api/categories', verifyToken, async (req, res) => {
   const { id, name, icon } = req.body;
   try {
     await db.query('INSERT INTO categories (id, name, icon) VALUES (?, ?, ?)', [id, name, icon]);
@@ -75,7 +132,7 @@ app.post('/api/categories', async (req, res) => {
   }
 });
 
-app.put('/api/categories/:id', async (req, res) => {
+app.put('/api/categories/:id', verifyToken, async (req, res) => {
   const { name, icon } = req.body;
   try {
     await db.query('UPDATE categories SET name = ?, icon = ? WHERE id = ?', [name, icon, req.params.id]);
@@ -86,7 +143,7 @@ app.put('/api/categories/:id', async (req, res) => {
   }
 });
 
-app.delete('/api/categories/:id', async (req, res) => {
+app.delete('/api/categories/:id', verifyToken, async (req, res) => {
   try {
     await db.query('DELETE FROM categories WHERE id = ?', [req.params.id]);
     res.json({ message: 'Deletado com sucesso' });
@@ -116,7 +173,7 @@ app.get('/api/addons', async (req, res) => {
   }
 });
 
-app.post('/api/addons', async (req, res) => {
+app.post('/api/addons', verifyToken, async (req, res) => {
   const { id, name, price, categoryIds } = req.body;
   const connection = await db.getConnection();
   try {
@@ -138,7 +195,7 @@ app.post('/api/addons', async (req, res) => {
   }
 });
 
-app.put('/api/addons/:id', async (req, res) => {
+app.put('/api/addons/:id', verifyToken, async (req, res) => {
   const { name, price, categoryIds } = req.body;
   const connection = await db.getConnection();
   try {
@@ -161,7 +218,7 @@ app.put('/api/addons/:id', async (req, res) => {
   }
 });
 
-app.delete('/api/addons/:id', async (req, res) => {
+app.delete('/api/addons/:id', verifyToken, async (req, res) => {
   try {
     await db.query('DELETE FROM addons WHERE id = ?', [req.params.id]);
     res.json({ message: 'Deletado com sucesso' });
@@ -228,7 +285,7 @@ app.get('/api/products', async (req, res) => {
   }
 });
 
-app.post('/api/products', async (req, res) => {
+app.post('/api/products', verifyToken, async (req, res) => {
   const { id, name, description, price, image, images, category, isPromo, originalPrice, promoExpiry, promoStock, addons, isMadeToOrder } = req.body;
   const connection = await db.getConnection();
   try {
@@ -267,7 +324,7 @@ app.post('/api/products', async (req, res) => {
   }
 });
 
-app.put('/api/products/:id', async (req, res) => {
+app.put('/api/products/:id', verifyToken, async (req, res) => {
   const { name, description, price, image, images, category, isPromo, originalPrice, promoExpiry, promoStock, addons, isMadeToOrder } = req.body;
   const connection = await db.getConnection();
   try {
@@ -309,7 +366,7 @@ app.put('/api/products/:id', async (req, res) => {
   }
 });
 
-app.delete('/api/products/:id', async (req, res) => {
+app.delete('/api/products/:id', verifyToken, async (req, res) => {
   try {
     await db.query('DELETE FROM products WHERE id = ?', [req.params.id]);
     res.json({ message: 'Deletado com sucesso' });
@@ -330,7 +387,7 @@ app.get('/api/loyalty/settings', async (req, res) => {
   }
 });
 
-app.put('/api/loyalty/settings', async (req, res) => {
+app.put('/api/loyalty/settings', verifyToken, async (req, res) => {
   const { active, spent_amount, points_earned, points_for_discount, discount_amount } = req.body;
   try {
     await db.query(
@@ -376,7 +433,7 @@ app.get('/api/store/settings', async (req, res) => {
   }
 });
 
-app.put('/api/store/settings', async (req, res) => {
+app.put('/api/store/settings', verifyToken, async (req, res) => {
   const { 
     has_delivery, has_table, has_pickup, 
     accepts_pix, accepts_cash, accepts_card, 
@@ -571,7 +628,7 @@ app.post('/api/orders', async (req, res) => {
   }
 });
 
-app.put('/api/orders/:id/status', async (req, res) => {
+app.put('/api/orders/:id/status', verifyToken, async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
   try {

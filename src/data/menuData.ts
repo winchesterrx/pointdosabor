@@ -8,17 +8,26 @@ export const API_URL = import.meta.env.PROD ? '/api' : (import.meta.env.VITE_API
 
 export const API = {
   async post(path: string, data: any) { 
-    const res = await fetch(API_URL + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); 
+    const token = localStorage.getItem('pointdosabor_token');
+    const headers: HeadersInit = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const res = await fetch(API_URL + path, { method: 'POST', headers, body: JSON.stringify(data) }); 
     if (!res.ok) throw new Error('API Error');
     return res;
   },
   async put(path: string, data: any) { 
-    const res = await fetch(API_URL + path, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); 
+    const token = localStorage.getItem('pointdosabor_token');
+    const headers: HeadersInit = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const res = await fetch(API_URL + path, { method: 'PUT', headers, body: JSON.stringify(data) }); 
     if (!res.ok) throw new Error('API Error');
     return res;
   },
   async del(path: string) { 
-    const res = await fetch(API_URL + path, { method: 'DELETE' }); 
+    const token = localStorage.getItem('pointdosabor_token');
+    const headers: HeadersInit = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const res = await fetch(API_URL + path, { method: 'DELETE', headers }); 
     if (!res.ok) throw new Error('API Error');
     return res;
   }
@@ -111,12 +120,17 @@ export const defaultCategories: Category[] = [
 const CATEGORIES_KEY = "pointdosabor_categories_v1";
 
 export function getCategories(): Category[] {
-  const stored = localStorage.getItem(CATEGORIES_KEY);
-  if (stored) {
-    try { return JSON.parse(stored); } catch { /* fallback */ }
-  }
-  localStorage.setItem(CATEGORIES_KEY, JSON.stringify(defaultCategories));
-  return defaultCategories;
+  const data = localStorage.getItem(CATEGORIES_KEY);
+  const categories = data ? JSON.parse(data) : defaultCategories;
+  const orderMap: Record<string, number> = { lanche: 1, burger: 1, hamb: 1, sobremesa: 2, doce: 2, bebida: 3 };
+  const getOrder = (cat: Category) => {
+    const n = cat.name.toLowerCase();
+    for (const [key, val] of Object.entries(orderMap)) {
+      if (n.includes(key)) return val;
+    }
+    return 99;
+  };
+  return categories.sort((a: Category, b: Category) => getOrder(a) - getOrder(b));
 }
 
 export function saveCategories(categories: Category[]) {
@@ -128,8 +142,15 @@ export async function fetchCategories(): Promise<Category[]> {
     const res = await fetch(`${API_URL}/categories`);
     if (!res.ok) throw new Error('Falha ao buscar categorias');
     const data = await res.json();
-    const orderMap: Record<string, number> = { lanches: 1, doces: 2, bebidas: 3 };
-    return data.sort((a: Category, b: Category) => (orderMap[a.id] || 99) - (orderMap[b.id] || 99));
+    const orderMap: Record<string, number> = { lanche: 1, burger: 1, hamb: 1, sobremesa: 2, doce: 2, bebida: 3 };
+    const getOrder = (cat: Category) => {
+      const n = cat.name.toLowerCase();
+      for (const [key, val] of Object.entries(orderMap)) {
+        if (n.includes(key)) return val;
+      }
+      return 99;
+    };
+    return data.sort((a: Category, b: Category) => getOrder(a) - getOrder(b));
   } catch (error) {
     console.error(error);
     return getCategories();
@@ -467,3 +488,12 @@ export async function fetchStoreSettings(): Promise<StoreSettings> {
 export async function saveStoreSettings(settings: StoreSettings) {
   return API.put('/store/settings', settings);
 }
+export const fetchDashboardStats = async () => {
+  try {
+    const { data } = await API.get('/dashboard/stats');
+    return data;
+  } catch (error) {
+    console.error("Error fetching dashboard stats", error);
+    return { revenue: 0, topProducts: [], peakHours: [] };
+  }
+};

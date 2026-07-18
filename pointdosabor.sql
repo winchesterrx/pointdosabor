@@ -39,6 +39,8 @@ CREATE TABLE IF NOT EXISTS `products` (
   `original_price` DECIMAL(10,2) DEFAULT NULL,
   `promo_expiry` DATETIME DEFAULT NULL,
   `promo_stock` INT DEFAULT NULL,
+  `manage_stock` BOOLEAN DEFAULT FALSE,
+  `stock_quantity` INT DEFAULT NULL,
   `order_count` INT DEFAULT 0,
   `is_made_to_order` BOOLEAN DEFAULT FALSE,
   `sub_category` VARCHAR(50) DEFAULT NULL,
@@ -141,6 +143,14 @@ CREATE TABLE IF NOT EXISTS `store_settings` (
   `closing_time` VARCHAR(5) DEFAULT '22:00',
   `delivery_fee` DECIMAL(10,2) DEFAULT 0.00,
   `delivery_info_text` VARCHAR(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Tabela: admins
+CREATE TABLE IF NOT EXISTS `admins` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `username` VARCHAR(50) NOT NULL UNIQUE,
+  `password_hash` VARCHAR(255) NOT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 
@@ -283,3 +293,7 @@ VALUES (1, 1, 1, 1, 1, 1, 1, '13:00', '22:00', 0.00, NULL);
 -- Fidelidade (desativado por padrão)
 INSERT INTO `loyalty_settings` (`id`, `active`, `spent_amount`, `points_earned`, `points_for_discount`, `discount_amount`)
 VALUES (1, 0, 10.00, 1, 10, 5.00);
+
+-- Admin Padrão (admin / 123) - Senha em hash gerada com bcrypt (10 rounds)
+INSERT INTO `admins` (`username`, `password_hash`) VALUES
+('admin', '$2a$10$TKh8H1.PfQx37YgCzwi.ZeCw.gWj7wO59O1Y0O131R35Y442t7jTq');

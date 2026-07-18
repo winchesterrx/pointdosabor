@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ClipboardList, Clock, CheckCircle2, ChevronLeft, Package, Truck, XCircle, Search, Bike } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import BottomNav from "@/components/menu/BottomNav";
-import { getOrdersByLookup, fetchOrdersByLookup } from "@/data/menuData";
+import { getOrdersByLookup, fetchOrdersByLookup, API_URL } from "@/data/menuData";
 import type { Order, OrderStatus } from "@/data/menuData";
+import { io } from "socket.io-client";
 
 const statusConfig: Record<OrderStatus, { label: string; icon: React.ElementType; color: string }> = {
   recebido: { label: "Recebido", icon: ClipboardList, color: "text-blue-500 bg-blue-500/10" },
@@ -39,12 +40,18 @@ export default function Pedidos() {
 
   const cleanTerm = searchTerm.replace(/\D/g, "");
 
-  const { data: orders = [] } = useQuery({
+  const { data: orders = [], refetch } = useQuery({
     queryKey: ['orders', cleanTerm],
     queryFn: () => fetchOrdersByLookup(cleanTerm),
-    enabled: cleanTerm.length >= 10 && cleanTerm.length <= 13,
-    refetchInterval: 5000
+    enabled: cleanTerm.length >= 10 && cleanTerm.length <= 13
   });
+
+  useEffect(() => {
+    const socket = io(API_URL.replace('/api', ''));
+    socket.on('order_status_updated', () => refetch());
+    socket.on('new_order', () => refetch());
+    return () => { socket.disconnect(); };
+  }, [refetch]);
 
   const loadOrders = () => {
     if (cleanTerm.length >= 10 && cleanTerm.length <= 13) {

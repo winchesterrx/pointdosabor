@@ -16,7 +16,8 @@ import SubCategoryNav from "@/components/menu/SubCategoryNav";
 import { fetchCategories } from "@/data/menuData";
 
 const Index = () => {
-  const { data: products = [] } = useQuery({ queryKey: ['products'], queryFn: fetchProducts });
+  const { data: rawProducts = [] } = useQuery({ queryKey: ['products'], queryFn: fetchProducts });
+  const products = rawProducts.filter((p: Product) => !p.manage_stock || (p.stock_quantity !== undefined && p.stock_quantity > 0));
   const { data: categories = [] } = useQuery({ queryKey: ['categories'], queryFn: fetchCategories });
   const [activeCategory, setActiveCategory] = useState("todos"); // Only used for visual highlight in top nav
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);

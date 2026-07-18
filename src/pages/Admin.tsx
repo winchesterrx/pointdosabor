@@ -1,17 +1,17 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  LogIn, LogOut, Plus, Pencil, Trash2, BarChart3, Package, Star, Settings,
-  ChevronLeft, LayoutGrid, ListPlus, ClipboardList, CheckCircle2, Clock,
-  Truck, XCircle, Printer, MessageCircle, Eye, Award, X, Bike
+  Trash2, Edit2, Plus, Image as ImageIcon, Save, X, Utensils, Pizza, Beer, IceCream, Coffee, Cake, ClipboardList, CheckCircle2, Clock, XCircle, Search, LayoutGrid, ListPlus, Truck, Package, Settings, Star, Award, LogOut, Printer, BarChart3
 } from "lucide-react";
+import DashboardTab from "@/components/admin/DashboardTab";
 import { useNavigate } from "react-router-dom";
 import {
   getProducts, saveProducts, getCategories, saveCategories,
   getAddons, saveAddons, getOrders, updateOrderStatus,
-  fetchProducts, fetchCategories, fetchAddons, fetchOrders, API,
+  fetchProducts, fetchCategories, fetchAddons, fetchOrders, API, API_URL,
   fetchLoyaltySettings, saveLoyaltySettings, fetchStoreSettings, saveStoreSettings
 } from "@/data/menuData";
+import { io } from "socket.io-client";
 import type { Product, Addon, Category, Order, OrderStatus, LoyaltySettings, StoreSettings } from "@/data/menuData";
 
 const availableIcons = [
@@ -47,11 +47,21 @@ export default function Admin() {
   const { data: categories = [], refetch: refetchCategories } = useQuery({ queryKey: ['categories'], queryFn: fetchCategories });
   const { data: addons = [], refetch: refetchAddons } = useQuery({ queryKey: ['addons'], queryFn: fetchAddons });
   const { data: orders = [], refetch: refetchOrders } = useQuery({ queryKey: ['orders'], queryFn: fetchOrders });
-  const [activeTab, setActiveTab] = useState<"orders" | "products" | "categories" | "addons" | "promos" | "loyalty" | "settings">("orders");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "orders" | "products" | "categories" | "addons" | "promos" | "loyalty" | "settings">("dashboard");
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const [orderFilter, setOrderFilter] = useState<OrderStatus | "todos">("todos");
+
+  useEffect(() => {
+    const token = localStorage.getItem('pointdosabor_token');
+    if (token) setIsLoggedIn(true);
+
+    const socket = io(API_URL.replace('/api', ''));
+    socket.on('new_order', () => refetchOrders());
+    socket.on('order_status_updated', () => refetchOrders());
+    return () => { socket.disconnect(); };
+  }, [refetchOrders]);
 
   // Category form
   const [showCatForm, setShowCatForm] = useState(false);
@@ -78,6 +88,8 @@ export default function Admin() {
   const [formPromoStock, setFormPromoStock] = useState("");
   const [formAddons, setFormAddons] = useState<string[]>([]);
   const [formIsMadeToOrder, setFormIsMadeToOrder] = useState(false);
+  const [formManageStock, setFormManageStock] = useState(false);
+  const [formStockQuantity, setFormStockQuantity] = useState("");
 
   // Loyalty form
   const [loyaltyData, setLoyaltyData] = useState<LoyaltySettings | null>(null);
@@ -121,12 +133,15 @@ export default function Admin() {
     }
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (user === "admin" && pass === "123") {
+    try {
+      const res = await API.post('/login', { username: user, password: pass });
+      const data = await res.json();
+      localStorage.setItem('pointdosabor_token', data.token);
       setIsLoggedIn(true);
       setLoginError("");
-    } else {
+    } catch (err) {
       setLoginError("Usuário ou senha incorretos");
     }
   };
@@ -142,6 +157,8 @@ export default function Admin() {
     setFormCategory(categories[0]?.id || "frango");
     setFormImages([]); setFormIsPromo(false); setFormOriginalPrice(""); setFormPromoExpiry(""); setFormPromoStock(""); setFormAddons([]);
     setFormIsMadeToOrder(false);
+    setFormManageStock(false);
+    setFormStockQuantity("");
     setEditingProduct(null); setShowForm(false);
   };
 
@@ -156,6 +173,8 @@ export default function Admin() {
     setFormPromoStock(product.promoStock !== undefined && product.promoStock !== null ? product.promoStock.toString() : "");
     setFormAddons(product.addons.map((a) => a.id));
     setFormIsMadeToOrder(product.isMadeToOrder || false);
+    setFormManageStock(product.manage_stock || false);
+    setFormStockQuantity(product.stock_quantity !== undefined && product.stock_quantity !== null ? product.stock_quantity.toString() : "");
     setShowForm(true);
   };
 
@@ -173,6 +192,8 @@ export default function Admin() {
       promoStock: formPromoStock !== "" ? parseInt(formPromoStock) : undefined,
       orderCount: editingProduct?.orderCount || 0,
       isMadeToOrder: formIsMadeToOrder,
+      manage_stock: formManageStock,
+      stock_quantity: formStockQuantity !== "" ? parseInt(formStockQuantity) : undefined,
     };
     try {
       if (editingProduct) {
@@ -256,10 +277,72 @@ export default function Admin() {
     }
   };
 
+  const handlePrint = (order: Order) => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+    const content = `
+      <html>
+        <head>
+          <title>Recibo - Pedido #${order.number}</title>
+          <style>
+            body { font-family: monospace; font-size: 14px; width: 300px; margin: 0; padding: 10px; }
+            .text-center { text-align: center; }
+            .bold { font-weight: bold; }
+            .border-bottom { border-bottom: 1px dashed #000; margin-bottom: 10px; padding-bottom: 10px; }
+            .flex { display: flex; justify-content: space-between; }
+          </style>
+        </head>
+        <body>
+          <div class="text-center bold border-bottom">
+            <h2>Point do Sabor</h2>
+            <p>Pedido #${order.number}</p>
+            <p>${new Date(order.createdAt).toLocaleString()}</p>
+          </div>
+          <div class="border-bottom">
+            <p class="bold">Cliente: ${order.customerName}</p>
+            <p>WhatsApp: ${order.customerWhatsApp}</p>
+            <p>Consumo: ${order.consumeOption}</p>
+            ${order.address ? `<p>Endereço: ${order.address}</p>` : ''}
+            ${order.mesa ? `<p>Mesa: ${order.mesa}</p>` : ''}
+          </div>
+          <div class="border-bottom">
+            ${order.items.map((i: any) => `
+              <div class="flex">
+                <span>${i.quantity}x ${i.productName}</span>
+                <span>R$ ${(i.productPrice * i.quantity).toFixed(2)}</span>
+              </div>
+              ${i.addons && i.addons.length > 0 ? `<div style="font-size: 12px; margin-left: 10px;">+ ${i.addons.map((a: any) => `${a.quantity}x ${a.name}`).join(', ')}</div>` : ''}
+              ${i.notes ? `<div style="font-size: 12px; margin-left: 10px;">Obs: ${i.notes}</div>` : ''}
+            `).join('')}
+          </div>
+          <div class="bold flex">
+            <span>Total</span>
+            <span>R$ ${order.total.toFixed(2)}</span>
+          </div>
+          <p>Pagamento: ${order.paymentOption}</p>
+          ${order.changeNeededFor ? `<p>Troco para: R$ ${order.changeNeededFor}</p>` : ''}
+        </body>
+      </html>
+    `;
+    printWindow.document.write(content);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 250);
+  };
+
   // ── Order management ──
   const handleUpdateOrderStatus = async (orderId: string, newStatus: OrderStatus) => {
     await API.put(`/orders/${orderId}/status`, { status: newStatus });
     await refetchOrders();
+    if (newStatus === "preparando" || newStatus === "confirmado") {
+      const order = orders.find((o) => o.id === orderId);
+      if (order) {
+        handlePrint(order);
+      }
+    }
   };
 
   const handleSendConfirmation = (order: Order) => {
@@ -349,6 +432,7 @@ export default function Admin() {
 
       <div className="flex border-b border-border bg-card overflow-x-auto">
         {[
+          { key: "dashboard", label: "Dashboard", icon: BarChart3 },
           { key: "orders", label: "Pedidos", icon: ClipboardList },
           { key: "products", label: "Produtos", icon: Package },
           { key: "categories", label: "Seções", icon: LayoutGrid },
@@ -371,6 +455,9 @@ export default function Admin() {
       </div>
 
       <div className="p-4 max-w-3xl mx-auto">
+        {/* ── DASHBOARD TAB ── */}
+        {activeTab === "dashboard" && <DashboardTab />}
+
         {/* ── ORDERS TAB ── */}
         {activeTab === "orders" && (
           <>
@@ -521,6 +608,18 @@ export default function Admin() {
                     className="w-full border border-border rounded-lg p-2.5 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring">
                     {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
+                </div>
+                
+                {/* Stock Management */}
+                <div className="bg-muted/10 border border-border rounded-lg p-3 space-y-3">
+                  <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
+                    <input type="checkbox" checked={formManageStock} onChange={(e) => setFormManageStock(e.target.checked)} className="rounded text-primary focus:ring-primary" />
+                    Gerenciar Estoque
+                  </label>
+                  {formManageStock && (
+                    <input value={formStockQuantity} onChange={(e) => setFormStockQuantity(e.target.value)} placeholder="Quantidade em Estoque" type="number" min="0"
+                      className="w-full border border-border rounded-lg p-2.5 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+                  )}
                 </div>
 
                 {/* Upload de Imagens */}
