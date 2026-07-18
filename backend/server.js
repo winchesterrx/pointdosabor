@@ -105,8 +105,35 @@ app.get('/api/dashboard/stats', verifyToken, async (req, res) => {
       ORDER BY total_sold DESC
       LIMIT 5
     `);
+    const [mesRows] = await db.query(`
+      SELECT SUM(total) as total_revenue
+      FROM orders 
+      WHERE MONTH(created_at) = MONTH(CURDATE()) AND YEAR(created_at) = YEAR(CURDATE()) AND status != 'cancelado'
+    `);
 
-    res.json({ hoje: hojeRows[0], topProducts });
+    const [peakHours] = await db.query(`
+      SELECT HOUR(created_at) as hour, COUNT(*) as order_count
+      FROM orders
+      WHERE MONTH(created_at) = MONTH(CURDATE()) AND YEAR(created_at) = YEAR(CURDATE()) AND status != 'cancelado'
+      GROUP BY HOUR(created_at)
+      ORDER BY order_count DESC
+      LIMIT 5
+    `);
+
+    const formattedTopProducts = topProducts.map(p => ({
+      name: p.product_name,
+      total_quantity: Number(p.total_sold)
+    }));
+
+    res.json({ 
+      revenue: {
+        today: Number(hojeRows[0]?.total_revenue || 0),
+        month: Number(mesRows[0]?.total_revenue || 0)
+      },
+      ordersCount: Number(hojeRows[0]?.total_orders || 0),
+      topProducts: formattedTopProducts,
+      peakHours: peakHours
+    });
   } catch(e) {
     console.error(e);
     res.status(500).json({ error: 'Erro ao buscar dashboard' });
