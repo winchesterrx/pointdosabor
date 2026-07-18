@@ -7,6 +7,14 @@ import xBaconBurger from "@/assets/x-bacon-burger.png";
 export const API_URL = import.meta.env.PROD ? '/api' : (import.meta.env.VITE_API_URL || 'http://localhost:3000/api');
 
 export const API = {
+  async get(path: string) {
+    const token = localStorage.getItem('pointdosabor_token');
+    const headers: HeadersInit = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const res = await fetch(API_URL + path, { method: 'GET', headers }); 
+    if (!res.ok) throw new Error('API Error');
+    return res.json();
+  },
   async post(path: string, data: any) { 
     const token = localStorage.getItem('pointdosabor_token');
     const headers: HeadersInit = { 'Content-Type': 'application/json' };
@@ -490,7 +498,7 @@ export async function saveStoreSettings(settings: StoreSettings) {
 }
 export const fetchDashboardStats = async () => {
   try {
-    const { data } = await API.get('/dashboard/stats');
+    const data = await API.get('/dashboard/stats');
     return data;
   } catch (error) {
     console.error("Error fetching dashboard stats", error);
