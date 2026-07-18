@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Trash2, Edit2, Plus, Image as ImageIcon, Save, X, Utensils, Pizza, Beer, IceCream, Coffee, Cake, ClipboardList, CheckCircle2, Clock, XCircle, Search, LayoutGrid, ListPlus, Truck, Package, Settings, Star, Award, LogOut, Printer, BarChart3, Bike, ChevronLeft
+  Trash2, Edit2, Plus, Image as ImageIcon, Save, X, Utensils, Pizza, Beer, IceCream, Coffee, Cake, ClipboardList, CheckCircle2, Clock, XCircle, Search, LayoutGrid, ListPlus, Truck, Package, Settings, Star, Award, LogOut, Printer, BarChart3, Bike, ChevronLeft, LogIn
 } from "lucide-react";
 import DashboardTab from "@/components/admin/DashboardTab";
 import { useNavigate } from "react-router-dom";
