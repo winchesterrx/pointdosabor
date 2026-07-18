@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from "react";
+import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
 import type { CartItem, Product, SelectedAddon } from "@/data/menuData";
 
 interface CartContextType {
@@ -14,7 +14,18 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>([]);
+  const [items, setItems] = useState<CartItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('pointdosabor_cart');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('pointdosabor_cart', JSON.stringify(items));
+  }, [items]);
 
   const addItem = useCallback((product: Product, addons: SelectedAddon[], notes: string) => {
     setItems((prev) => [...prev, { product, quantity: 1, selectedAddons: addons, notes }]);
